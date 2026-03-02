@@ -146,12 +146,49 @@ export default function Home() {
         <div className="lg:w-2/3 h-[500px]">
           <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {/* rahat will show the markers with the food listing in the popup here */}
+            {positions.length > 0 && <FitBounds positions={positions} />}
+
+            {providerMarkers.map((m) => (
+              <Marker key={m.providerKey} position={[m.lat, m.lng]}>
+                <Popup>
+                  <div>
+                    <strong>{m.providerName}</strong>
+                    <div>{m.foods[0].foodName}</div>
+                    <div>Qty: {m.foods[0].quantity}</div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
         </div>
+{/* LIST */}
+        <div className="lg:w-1/3 space-y-4">
+          {foods.map(f => (
+            <div key={f._id} className="card p-4 border">
+              <h4 className="font-bold text-lg">{f.foodName}</h4>
+              <p className="text-sm text-gray-500">
+                🏪 {f.providerId.name}
+              </p>
+              <p className="text-sm">
+                📦 {f.quantity} Servings
+              </p>
 
-       {/* rahat will make the food listing with the java script code and design here */}
-
+              <button
+                disabled={requestedItems.includes(f._id)}
+                onClick={() => requestFood(f._id)}
+                className={`mt-3 w-full py-2 rounded ${
+                  requestedItems.includes(f._id)
+                    ? 'bg-gray-300'
+                    : 'bg-emerald-600 text-white'
+                }`}
+              >
+                {requestedItems.includes(f._id)
+                  ? '✓ Requested'
+                  : 'Request Item'}
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="text-center mt-10">

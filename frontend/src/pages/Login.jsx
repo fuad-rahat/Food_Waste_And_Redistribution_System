@@ -13,7 +13,23 @@ export default function Login() {
 
   const submit = async (e) => {
     e.preventDefault()
-    // rahat will complete the login logic here
+    setError('')
+    setVerificationStatus(null)
+    setLoading(true)
+    try {
+      const res = await api.post('/api/auth/login', { email, password })
+      saveToken(res.data.token)
+      const user = JSON.parse(atob(res.data.token.split('.')[1]))
+      if (user.role === 'provider') navigate('/provider')
+      else if (user.role === 'ngo') navigate('/ngo')
+      else if (user.role === 'admin') navigate('/admin')
+    } catch (err) {
+      const data = err.response?.data
+      setVerificationStatus(data?.verificationStatus || null)
+      setError(data?.message || 'Login failed. Please check your credentials.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const inputClass =
