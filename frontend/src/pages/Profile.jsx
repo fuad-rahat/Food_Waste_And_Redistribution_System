@@ -11,7 +11,24 @@ export default function Profile() {
   const [requests, setRequests] = useState([])
   const user = getUserFromToken()
 
-  // mahbub will work later
+  useEffect(() => { if (user) loadProfile(); }, [])
+
+  const loadProfile = async () => {
+    try {
+      const token = getToken();
+      const resUser = await api.get('/api/auth/me', { headers: { Authorization: 'Bearer ' + token } }).catch(() => null);
+      if (resUser && resUser.data.user) setUserData(resUser.data.user);
+      if (user.role === 'provider') {
+        const resFoods = await api.get('/api/food/my-food', { headers: { Authorization: 'Bearer ' + token } });
+        setFoods(resFoods.data.foods || []);
+        const pres = await api.get('/api/provider/requests', { headers: { Authorization: 'Bearer ' + token } });
+        setGroupedRequests(pres.data.grouped || {});
+      } else if (user.role === 'ngo') {
+        const res = await api.get('/api/ngo/requests', { headers: { Authorization: 'Bearer ' + token } });
+        setRequests(res.data.list || []);
+      }
+    } catch (e) { }
+  }
 
   // mahbub will work later
 
