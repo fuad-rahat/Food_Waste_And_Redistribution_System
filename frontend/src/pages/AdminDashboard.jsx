@@ -132,7 +132,81 @@ export default function AdminDashboard() {
       <div className="px-4 animate-fadeIn">
 
         {/* ── PENDING VERIFICATION ── */}
-        {/* mahbub will work here */}
+       {tab === 'pending' && (
+          <div className="max-w-5xl mx-auto">
+            {pendingUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-3xl py-20 bg-white ring-1 ring-slate-100 shadow-sm text-center">
+                <span className="text-6xl mb-4 block">✨</span>
+                <p className="text-slate-400 font-bold">No pending verifications</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {pendingUsers.map(u => (
+                  <div key={u._id} className="bg-white rounded-3xl ring-1 ring-slate-200 shadow-lg overflow-hidden">
+                    <div className="p-6 md:p-8">
+                      <div className="flex justify-between items-start gap-4 mb-6">
+                        <div>
+                          <h4 className="text-xl font-black text-slate-800 tracking-tight">{u.name}</h4>
+                          <p className="text-slate-400 text-sm font-medium">{u.email}</p>
+                        </div>
+                        <div className="text-[10px] bg-slate-100 px-2 py-1 rounded-full font-black text-slate-400 uppercase tracking-widest">
+                          {new Date(u.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 mb-8">
+                        {roleBadge(u.role)}
+                        {statusBadge(u.verificationStatus)}
+                      </div>
+
+                      {u.legalDocumentImages?.length > 0 && (
+                        <div className="mb-8">
+                          {/* Thumbnail strip — first 3 pages as preview */}
+                          <div className="flex gap-2 mb-3">
+                            {u.legalDocumentImages.slice(0, 3).map((url, i) => (
+                              <div key={i} className="relative w-16 aspect-[3/4] rounded-lg overflow-hidden ring-1 ring-slate-200 bg-slate-100 flex-shrink-0">
+                                <img src={url} alt={`p${i + 1}`} className="w-full h-full object-cover" />
+                                <span className="absolute bottom-0.5 left-0.5 text-[8px] font-black bg-black/50 text-white px-1 rounded">{i + 1}</span>
+                              </div>
+                            ))}
+                            {u.legalDocumentImages.length > 3 && (
+                              <div className="w-16 aspect-[3/4] rounded-lg ring-1 ring-slate-200 bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xs font-black text-slate-400">+{u.legalDocumentImages.length - 3}</span>
+                              </div>
+                            )}
+                          </div>
+                          {/* Open full viewer */}
+                          <button
+                            type="button"
+                            onClick={() => openDocViewer(u)}
+                            className="w-full py-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                          >
+                            📄 View All {u.legalDocumentImages.length} Page{u.legalDocumentImages.length > 1 ? 's' : ''}
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-50">
+                        <button
+                          onClick={() => verifyUser(u._id, 'approve')}
+                          className="py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl transition-all"
+                        >
+                          Approve Account
+                        </button>
+                        <button
+                          onClick={() => verifyUser(u._id, 'reject')}
+                          className="py-3 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-600 font-black text-xs rounded-2xl border border-rose-100 transition-all"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── ALL USERS ── */}
         {tab === 'users' && (
