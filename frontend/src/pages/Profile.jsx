@@ -30,7 +30,17 @@ export default function Profile() {
     } catch (e) { }
   }
 
-  // mahbub will work later
+  const accept = async (requestId, foodId) => {
+    const amtStr = await showPrompt('Grant Amount', 'Enter amount you will give to this NGO (number)');
+    if (!amtStr) return;
+    const grantedAmount = parseInt(amtStr, 10);
+    if (isNaN(grantedAmount) || grantedAmount < 0) { showAlert('Invalid Amount', 'Please entering a valid positive number.'); return }
+    try {
+      await api.put('/api/provider/request/' + requestId + '/accept', { grantedAmount }, { headers: { Authorization: 'Bearer ' + getToken() } });
+      showAlert('Request Accepted', 'The NGO has been notified of your donation.');
+      loadProfile();
+    } catch (e) { showAlert('Error', 'Failed to accept the request. Please try again.') }
+  }
 
   //mahbub will work later
 
