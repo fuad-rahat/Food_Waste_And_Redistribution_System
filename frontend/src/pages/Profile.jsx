@@ -42,7 +42,13 @@ export default function Profile() {
     } catch (e) { showAlert('Error', 'Failed to accept the request. Please try again.') }
   }
 
-  //mahbub will work later
+  const reject = async (requestId) => {
+    try {
+      await api.put('/api/provider/request/' + requestId + '/reject', {}, { headers: { Authorization: 'Bearer ' + getToken() } });
+      showAlert('Request Rejected', 'The request has been removed.');
+      loadProfile();
+    } catch (e) { showAlert('Error', 'Failed to reject the request.') }
+  }
 
   return (
     <div className="dashboard-page animate-fadeIn overflow-x-hidden">
