@@ -112,7 +112,22 @@ export default function AdminDashboard() {
       {/* tanvir will work here */}
 
       {/* Tab nav */}
-      {/* mahbub will work here */}
+       <div className="mx-4 sticky top-24 z-10 mb-8">
+        <div className="flex gap-1 overflow-x-auto bg-white rounded-2xl border border-slate-100 p-1.5 shadow-sm">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 min-w-max px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wide transition-all whitespace-nowrap ${tab === t.id
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="px-4 animate-fadeIn">
 
