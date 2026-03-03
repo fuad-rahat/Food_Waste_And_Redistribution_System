@@ -21,7 +21,27 @@ export default function Register() {
 
   // tanvir will for here
 
-  //mahbub will work here later
+   const submit = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (legalDocumentImages.length === 0) {
+      setError('Please upload at least one legal document (image or PDF) before submitting.')
+      return
+    }
+    setLoading(true)
+    try {
+      await api.post('/api/auth/register', {
+        name, email, password, role,
+        location: { lat: parseFloat(lat) || 0, lng: parseFloat(lng) || 0 },
+        legalDocumentImages
+      })
+      setSuccess(true)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const inputClass =
     'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 font-medium placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all'
