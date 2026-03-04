@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const app = express();
 
-// Allow all origins
+// Allow all origins (safe here because you use Bearer tokens, not cookies)
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -15,12 +15,9 @@ app.use(cors({
 app.options('*', cors());
 app.use(express.json());
 
-// Routes 
-app.use('/auth', require('./routes/auth'));
-app.use('/food', require('./routes/food'));
-app.use('/ngo', require('./routes/ngo'));
-app.use('/admin', require('./routes/admin'));
-app.use('/provider', require('./routes/provider'));
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 5000;
 
