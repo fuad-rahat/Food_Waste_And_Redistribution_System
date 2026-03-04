@@ -49,6 +49,29 @@ export default function NGODashboard() {
     } catch (e) { showAlert('Error', e.response?.data?.message || 'Failed to fetch nearby items.') }
   }
 
+  const fetchMyRequests = async () => {
+    try {
+      const res = await api.get('/api/ngo/requests', authHeaders())
+      setMyRequests(res.data.list || [])
+    } catch (e) { }
+  }
+
+  const fetchProofs = async () => {
+    try {
+      const res = await api.get('/api/ngo/distribution-proofs', authHeaders())
+      setProofs(res.data.proofs || [])
+    } catch (e) { }
+  }
+
+  const claim = async (id) => {
+    try { await api.put(`/api/ngo/claim/${id}`, {}, authHeaders()); fetchNearby(); showAlert('Claimed', 'Food item claimed successfully.') }
+    catch (e) { showAlert('Error', e.response?.data?.message || 'Failed to claim food.') }
+  }
+
+  const collect = async (id) => {
+    try { await api.put(`/api/ngo/collect/${id}`, {}, authHeaders()); fetchNearby(); showAlert('Collected', 'Food marked as collected.') }
+    catch (e) { showAlert('Error', e.response?.data?.message || 'Failed to collect food.') }
+  }
 
   const sendRequest = async () => {
     if (!requestModal) return
