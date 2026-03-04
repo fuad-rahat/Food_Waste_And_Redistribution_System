@@ -29,9 +29,28 @@ export default function ProviderDashboard() {
     }
   }
 
- 
+  const fetchRequests = async () => {
+    try {
+      const res = await api.get('/api/provider/requests', authHeaders())
+      setRequests(res.data.grouped || {})
+    } catch (e) { }
+  }
 
-  
+  const submit = async (e) => {
+    e.preventDefault()
+    setPosting(true)
+    try {
+      await api.post('/api/food/create', {
+        foodName, quantity: Number(quantity), expiryTime,
+        location: { lat: 0, lng: 0 }, details
+      }, authHeaders())
+      setFoodName(''); setQuantity(1); setExpiryTime(''); setDetails('')
+      fetchMyFoods()
+      setTab('my-foods')
+      showAlert('Food Posted!', 'Your donation is now visible to nearby NGOs.')
+    } catch (e) { showAlert('Upload Failed', e.response?.data?.message || 'Error posting food') }
+    finally { setPosting(false) }
+  }
 
   const acceptRequest = async (reqId) => {
     const granted = grantAmounts[reqId] || 0
