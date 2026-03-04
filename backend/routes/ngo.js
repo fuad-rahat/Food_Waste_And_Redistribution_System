@@ -45,7 +45,25 @@ router.put('/claim/:id', auth, isNGO, isActiveUser, async (req, res) => {
 });
 
 // PUT /api/ngo/collect/:id
-
+router.put('/collect/:id', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const food = await Food.findById(req.params.id);
+    if (!food) return res.status(404).json({ message: 'Not found' });
+    if (food.status === 'collected') return res.status(400).json({ message: 'Already collected' });
+    food.status = 'collected';
+    await food.save();
+    const collection = new Collection({
+      foodId: food._id,
+      providerId: food.providerId,
+      ngoId: req.user.id,
+      pickup_status: 'pending'
+    });
+    await collection.save();
+    res.json({ message: 'Collected', food, collection });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // PUT /api/ngo/collection/:id/complete — mark pickup as completed
 
