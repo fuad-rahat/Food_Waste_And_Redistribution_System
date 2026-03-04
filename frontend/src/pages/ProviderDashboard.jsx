@@ -37,7 +37,19 @@ export default function ProviderDashboard() {
 
   
 
- 
+  const pendingRequestCount = Object.values(requests).reduce((sum, g) =>
+    sum + g.requests.filter(r => r.status === 'pending').length, 0)
+
+  const deleteFood = async (foodId) => {
+    if (!(await showConfirm('Delete Post', 'Are you sure you want to delete this food post? This will also remove any pending notifications for it.'))) return
+    try {
+      await api.delete(`/api/food/${foodId}`, authHeaders())
+      showAlert('Deleted', 'Food post deleted successfully.')
+      fetchMyFoods()
+    } catch (e) {
+      showAlert('Error', e.response?.data?.message || 'Error deleting food')
+    }
+  }
 
   const statusColor = { available: 'badge-green', claimed: 'badge-yellow', collected: 'badge-blue', expired: 'badge-red' }
 
