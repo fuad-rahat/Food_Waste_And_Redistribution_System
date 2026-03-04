@@ -41,7 +41,7 @@ export default function Login() {
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="text-5xl mb-6 animate-bounce">🌱</div>
+          <div className="text-5xl mb-6 animate-bounce"> </div>
           <h2 className="text-3xl font-black text-slate-800 tracking-tighter mb-2">Welcome Back</h2>
           <p className="text-slate-500 font-medium">Continue your journey in reducing food waste.</p>
         </div>
@@ -70,7 +70,12 @@ export default function Login() {
           </div>
         )}
 
-        {/* tanvir will add error banner here */}
+        {/* Generic error */}
+        {error && !verificationStatus && (
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-sm font-bold mb-8 animate-fadeIn">
+            ⚠️ {error}
+          </div>
+        )}
 
         <form onSubmit={submit} className="space-y-6">
           {/* Email */}
