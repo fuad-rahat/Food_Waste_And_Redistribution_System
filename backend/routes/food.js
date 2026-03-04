@@ -147,6 +147,33 @@ router.get('/available', async (req, res) => {
   }
 });
 // DELETE /api/food/:id — provider deletes their own food post
-//mahbub
+router.delete('/:id', auth, isProvider, isActiveUser, async (req, res) => {
+  try {
+    const food = await Food.findById(req.params.id);
+    if (!food) return res.status(404).json({ message: 'Food not found' });
+
+    // Check ownership
+    if (food.providerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to delete this food post' });
+    }
+
+    // Optional: Only allow deletion if status is 'available'? 
+    // Or allow anytime if the provider wants to retract it. 
+    // Usually better to only allow retractable if not already claimed/collected.
+    if (food.status !== 'available') {
+      return res.status(400).json({ message: `Cannot delete food that is already ${food.status}` });
+    }
+
+    await Food.deleteOne({ _id: req.params.id });
+
+    // Also cleanup any notifications related to this food
+    await Notification.deleteMany({ foodId: req.params.id });
+
+    res.json({ message: 'Food post deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router;
