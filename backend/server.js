@@ -18,7 +18,9 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
-
+app.use('/api/food', require('./routes/food'));
+app.use('/api/provider', require('./routes/provider'));
+app.use('/api/ngo', require('./routes/ngo'));
 
 const PORT = process.env.PORT || 5000;
 
