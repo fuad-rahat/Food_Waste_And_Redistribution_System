@@ -33,9 +33,23 @@ export default function ProviderDashboard() {
 
   
 
- 
+  const acceptRequest = async (reqId) => {
+    const granted = grantAmounts[reqId] || 0
+    try {
+      await api.put(`/api/provider/request/${reqId}/accept`, { grantedAmount: Number(granted) }, authHeaders())
+      showAlert('Success', 'Request accepted successfully.')
+      fetchMyFoods(); fetchRequests()
+    } catch (e) { showAlert('Error', 'Failed to accept request.') }
+  }
 
-  
+  const rejectRequest = async (reqId) => {
+    try {
+      if (!(await showConfirm('Reject Request', 'Are you sure you want to reject this request?'))) return
+      await api.put(`/api/provider/request/${reqId}/reject`, {}, authHeaders())
+      showAlert('Rejected', 'The request has been rejected.')
+      fetchRequests()
+    } catch (e) { showAlert('Error', 'Failed to reject request.') }
+  }
 
   const pendingRequestCount = Object.values(requests).reduce((sum, g) =>
     sum + g.requests.filter(r => r.status === 'pending').length, 0)
