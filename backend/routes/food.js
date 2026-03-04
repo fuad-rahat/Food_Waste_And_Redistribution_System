@@ -63,7 +63,89 @@ router.get('/my-food', auth, isProvider, isActiveUser, async (req, res) => {
 
 // GET /api/food/available — public list with search, proximity filter, and pagination
 
+router.get('/available', async (req, res) => {
+  try {
+    const { search, page = 1, limit = 10, lat, lng, nearMe } = req.query;
+    const now = new Date();
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    let query = { status: 'available' };
+
+    // 1. Search Logic
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      // Find providers matching search in name or email
+      const matchingProviders = await User.find({
+        role: 'provider',
+        $or: [
+          { name: searchRegex },
+          { email: searchRegex }
+        ]
+      }).select('_id');
+      const providerIds = matchingProviders.map(p => p._id);
+
+      query.$or = [
+        { foodName: searchRegex },
+        { providerId: { $in: providerIds } }
+      ];
+    }
+
+    // Fetch foods and populate provider
+    let foods = await Food.find(query)
+      .populate('providerId', 'name email location')
+      .sort({ createdAt: -1 });
+
+    // 2. Ensure location is present (backwards compatibility/sync)
+    for (let f of foods) {
+      const prov = f.providerId;
+      if (prov && (!prov.location || prov.location.lat == null || (prov.location.lat === 0 && prov.location.lng === 0))) {
+        try {
+          const user = await User.findById(prov._id || prov).select('location name email');
+          if (user && user.location) {
+            f.providerId.location = { lat: user.location.lat, lng: user.location.lng };
+          }
+        } catch (e) { }
+      }
+    }
+
+    // 3. Proximity Filter (JS side for simplicity with population)
+    if (nearMe === 'true' && lat && lng) {
+      const userLat = parseFloat(lat);
+      const userLng = parseFloat(lng);
+      foods = foods.filter(f => {
+        const pLoc = f.providerId?.location || f.location;
+        if (!pLoc || pLoc.lat == null) return false;
+        const d = haversineDistance(userLat, userLng, pLoc.lat, pLoc.lng);
+        return d <= 5; // 5km radius
+      });
+    }
+
+    const total = foods.length;
+    const paginatedFoods = foods.slice(skip, skip + parseInt(limit));
+
+    const transformed = paginatedFoods.map(f => ({
+      _id: f._id,
+      foodName: f.foodName,
+      quantity: f.quantity,
+      expiryTime: f.expiryTime,
+      location: f.location,
+      details: f.details,
+      status: f.status,
+      providerId: f.providerId,
+      isExpired: f.expiryTime && (new Date(f.expiryTime) < now)
+    }));
+
+    res.json({
+      foods: transformed,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit))
+    });
+  } catch (err) {
+    console.error('available err', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 // DELETE /api/food/:id — provider deletes their own food post
 //mahbub
 
