@@ -52,7 +52,14 @@ router.post('/create', auth, isProvider, isActiveUser, async (req, res) => {
 });
 
 // GET /api/food/my-food — provider's food
-
+router.get('/my-food', auth, isProvider, isActiveUser, async (req, res) => {
+  try {
+    const foods = await Food.find({ providerId: req.user.id }).sort({ createdAt: -1 });
+    res.json({ foods });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // GET /api/food/available — public list with search, proximity filter, and pagination
 
