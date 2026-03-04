@@ -4,6 +4,14 @@ import { useNavigate, Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import api from '../api'
+import { getToken, getUserFromToken } from '../utils/auth'
+
+const parseDMS = (coord) => {
+  if (typeof coord === 'number') return coord;
+  const val = parseFloat(coord);
+  return isNaN(val) ? 0 : val;
+};
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -200,15 +208,22 @@ const ORGS = ['Dhaka Medical Aid', 'Green Earth BD', 'Bread of Life Foundation',
 
 /* ── Component ───────────────────────────────────────────── */
 export default function Home() {
-  const { showAlert } = useModal()
-  const navigate = useNavigate()
+  const { showAlert, showConfirm, showPrompt } = useModal()
   const statsRef = useRef(null)
+  const [statsOn, setStatsOn] = useState(false)
+
+  const [foods, setFoods] = useState([])
+  const [myRequests, setMyRequests] = useState([])
 
   const [search, setSearch] = useState('')
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [sortBy, setSortBy] = useState('default')
-  const [requested, setRequested] = useState([])
-  const [statsOn, setStatsOn] = useState(false)
+  const [nearMe, setNearMe] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
+  const [userLoc, setUserLoc] = useState(null)
+  const [mapCenter, setMapCenter] = useState([23.8103, 90.4125])
 
   useEffect(() => {
     const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStatsOn(true) }, { threshold: 0.3 })
@@ -216,25 +231,134 @@ export default function Home() {
     return () => io.disconnect()
   }, [])
 
-  const foods = FOODS
-    .filter(f =>
-      (activeFilter === 'All' || f.cat === activeFilter) &&
-      (f.name.toLowerCase().includes(search.toLowerCase()) ||
-        f.provider.toLowerCase().includes(search.toLowerCase()))
-    )
-    .sort((a, b) => {
-      if (sortBy === 'qty') return b.qty - a.qty
-      if (sortBy === 'expiry') return a.expiresIn.localeCompare(b.expiresIn)
-      return 0
-    })
+  useEffect(() => {
+    fetchFoods();
+    fetchMyRequests();
+  }, [page, nearMe])
 
-  const request = (id) => {
-    if (requested.includes(id)) return
-    setRequested(p => [...p, id])
-    showAlert('Success', 'Request sent! The provider will be notified shortly.')
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setMapCenter([latitude, longitude]);
+        setUserLoc({ lat: latitude, lng: longitude });
+      },
+      () => { },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }, [])
+
+  const fetchFoods = async () => {
+    setIsLoading(true);
+    try {
+      const params = { search, page, limit: 5, nearMe: nearMe ? 'true' : 'false' };
+      if (userLoc) { params.lat = userLoc.lat; params.lng = userLoc.lng; }
+      const res = await api.get('/api/food/available', { params });
+      setFoods(res.data.foods || []);
+      setTotalItems(res.data.total || 0);
+      setTotalPages(res.data.pages || 1);
+    } catch (e) { console.error('fetchFoods', e); }
+    finally { setIsLoading(false); }
   }
 
-  const positions = foods.map(f => [f.lat, f.lng])
+  const clearFilters = () => {
+    setSearch('');
+    setNearMe(false);
+  }
+
+  useEffect(() => {
+    if (search === '' && nearMe === false) {
+      fetchFoods();
+    }
+  }, [search, nearMe])
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setPage(1);
+    fetchFoods();
+  }
+
+  const fetchMyRequests = async () => {
+    const user = getUserFromToken();
+    if (!user || user.role !== 'ngo') return;
+    try {
+      const res = await api.get('/api/ngo/requests', { headers: { Authorization: 'Bearer ' + getToken() } });
+      setMyRequests(res.data.list || []);
+    } catch (e) { console.error('fetchMyRequests', e); }
+  }
+
+  const openLocation = (lat, lng) => {
+    const url = `https://www.google.com/maps?q=${lat},${lng}`;
+    window.open(url, '_blank');
+  }
+
+  const requestFood = async (foodId, availableQty) => {
+    const user = getUserFromToken();
+    if (!user) { showAlert('Login Required', 'Please login to request food'); return }
+    if (user.role !== 'ngo') { showAlert('Access Denied', 'Only NGOs/Volunteers can request/claim food'); return }
+
+    const amtStr = await showPrompt('Request Food', `Enter requested amount (available: ${availableQty})`, String(availableQty));
+    if (!amtStr) return;
+
+    const requestedAmount = parseInt(amtStr, 10);
+    if (isNaN(requestedAmount) || requestedAmount <= 0) { showAlert('Invalid Amount', 'Please enter a valid positive number'); return }
+
+    try {
+      await api.post('/api/ngo/request/' + foodId, { requestedAmount }, { headers: { Authorization: 'Bearer ' + getToken() } });
+      showAlert('Success!', 'Requested successfully. The provider will review your request.');
+      fetchMyRequests();
+    } catch (e) {
+      console.error('requestFood', e);
+      showAlert('Error', e.response?.data?.message || 'Failed to request food');
+    }
+  }
+
+  const hasRequested = (foodId) => {
+    try {
+      return myRequests.some(r => {
+        if (!r) return false;
+        const fid = r.foodId?._id || r.foodId;
+        if (String(fid) !== String(foodId)) return false;
+        if (r.status === 'pending') return true;
+        if (r.status === 'accepted') {
+          const col = r.collectionId;
+          const status = typeof col === 'object' ? col.pickup_status : null;
+          if (!col || status !== 'completed') return true;
+        }
+        return false;
+      });
+    } catch (e) { return false; }
+  }
+
+  const providerBuckets = new Map()
+  foods.forEach((f) => {
+    const prov = f.providerId
+    const providerKey = String(prov?._id || prov?.id || prov?.email || f.providerId || 'unknown')
+    const providerName = prov?.name || 'Provider'
+    let lat = prov?.location?.lat, lng = prov?.location?.lng
+    if ((lat == null || lng == null) && f.location) { lat = f.location.lat; lng = f.location.lng; }
+    if (lat == null || lng == null) return
+    const nlat = parseDMS(lat), nlng = parseDMS(lng)
+    if (isNaN(nlat) || isNaN(nlng)) return
+    const existing = providerBuckets.get(providerKey)
+    if (!existing) providerBuckets.set(providerKey, { providerKey, providerName, lat: nlat, lng: nlng, foods: [f] })
+    else existing.foods.push(f)
+  })
+  const providerMarkers = Array.from(providerBuckets.values())
+
+  const adjustedMarkers = []
+  const thresholdDeg = 0.00002
+  providerMarkers.forEach((m) => {
+    let { lat, lng } = m
+    const close = adjustedMarkers.filter(a => Math.hypot(a.lat - lat, a.lng - lng) <= thresholdDeg)
+    if (close.length === 0) adjustedMarkers.push({ ...m, lat, lng })
+    else {
+      const idx = close.length, angle = (idx * 45) * (Math.PI / 180), offsetDeg = thresholdDeg * 1.5 * (Math.ceil((idx + 1) / 1))
+      adjustedMarkers.push({ ...m, lat: lat + Math.cos(angle) * offsetDeg, lng: lng + Math.sin(angle) * offsetDeg })
+    }
+  })
+  const positions = adjustedMarkers.map(m => [m.lat, m.lng])
 
   return (
     <div className="bg-white">
@@ -345,7 +469,7 @@ export default function Home() {
           </div>
 
           {/* ── Smart filter bar ── */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-8 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center shadow-sm">
+          <form onSubmit={handleSearchSubmit} className="bg-white border border-slate-200 rounded-2xl p-4 mb-8 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center shadow-sm">
             {/* Search input */}
             <div className="relative flex-1 min-w-0">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -358,128 +482,148 @@ export default function Home() {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-
             {/* Divider */}
             <div className="hidden sm:block w-px bg-slate-200 self-stretch" />
-
-            {/* Category filter pills */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Filter:</span>
-              {['All', 'Cooked Meal', 'Bakery', 'Fresh Produce'].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveFilter(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeFilter === cat
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                    }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={nearMe} onChange={e => setNearMe(e.target.checked)} className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4" />
+                Near Me Only
+              </label>
             </div>
-
             {/* Divider */}
             <div className="hidden sm:block w-px bg-slate-200 self-stretch" />
-
-            {/* Sort dropdown */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sort:</span>
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                className="bg-slate-100 border-0 text-slate-600 text-xs font-bold rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
-              >
-                <option value="default">Newest</option>
-                <option value="qty">Quantity ↓</option>
-                <option value="expiry">Expiring Soon</option>
-              </select>
-            </div>
-
-            {/* Active filter count badge */}
-            {(activeFilter !== 'All' || search) && (
-              <button
-                onClick={() => { setActiveFilter('All'); setSearch('') }}
-                className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-lg transition-all"
-              >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Clear
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button type="submit" className="flex-1 px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 active:scale-95 transition-all outline-none shadow-sm shadow-emerald-100 text-sm">
+                Search
               </button>
-            )}
-          </div>
+              {(search || nearMe) && (
+                <button type="button" onClick={clearFilters} className="px-6 py-2.5 bg-rose-50 text-rose-600 font-bold rounded-xl hover:bg-rose-100 active:scale-95 transition-all text-sm">
+                  Clear
+                </button>
+              )}
+            </div>
+          </form>
 
-          <div className="flex flex-col lg:flex-row gap-5">
-            {/* map */}
-            <div className="lg:w-3/5 rounded-2xl overflow-hidden border border-slate-200 shadow-md" style={{ height: 460 }}>
-              <MapContainer center={[23.8103, 90.4125]} zoom={13} style={{ height: '100%', width: '100%' }}>
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                {positions.length > 0 && <FitBounds positions={positions} />}
-                {foods.map(f => (
-                  <Marker key={f._id} position={[f.lat, f.lng]}>
-                    <Popup>
-                      <b>{f.name}</b><br />{f.provider}<br />
-                      <span className="text-slate-500">{f.qty} servings</span>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+          <div className="flex flex-col lg:flex-row gap-10">
+            <div className="lg:w-2/3">
+              <div className="h-[400px] md:h-[600px] sticky top-28 mb-8 lg:mb-0 z-10 shadow-sm rounded-[1.5rem]">
+                <MapContainer center={mapCenter} zoom={12} style={{ height: '100%', width: '100%', borderRadius: '1.5rem', zIndex: 0 }} scrollWheelZoom={false}>
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  {positions.length > 0 && <FitBounds positions={positions} />}
+                  {adjustedMarkers.map((m) => (
+                    <Marker key={m.providerKey} position={[m.lat, m.lng]}>
+                      <Popup maxWidth={320}>
+                        <div className="p-1 min-w-[240px]">
+                          <div className="text-lg font-black border-b border-slate-100 pb-2 mb-3 text-slate-800 flex items-center gap-2">
+                            🏪 {m.providerName}
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            {m.foods.map((f) => (
+                              <div key={f._id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center group">
+                                <div>
+                                  <div className="font-bold text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight text-xs">{f.foodName}</div>
+                                  <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-0.5">Qty: {f.quantity}</div>
+                                </div>
+                                <button
+                                  disabled={hasRequested(f._id) || f.isExpired}
+                                  onClick={() => requestFood(f._id, f.quantity)}
+                                  className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${hasRequested(f._id) || f.isExpired ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-90 shadow-sm'}`}
+                                >
+                                  {hasRequested(f._id) ? '✓' : 'Req'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
             </div>
 
-            {/* cards */}
-            <div className="lg:w-2/5 flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: 460 }}>
-              {foods.length === 0 && (
-                <div className="flex-1 flex flex-col items-center justify-center py-16 text-slate-400">
-                  <IconSearch className="w-10 h-10 mb-3 opacity-40" />
-                  <p className="text-sm">No listings match your search.</p>
+            <div className="lg:w-1/3 flex flex-col gap-6">
+              <div className="flex items-center justify-between px-4 sm:px-0">
+                <h3 className="text-xl font-black tracking-tighter text-slate-800 uppercase">Available Food ({totalItems})</h3>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page {page}/{totalPages || 1}</span>
+              </div>
+
+              {isLoading ? (
+                <div className="flex items-center justify-center py-32 bg-white rounded-[2rem] border border-slate-100 italic text-slate-400 font-bold animate-pulse">
+                  🍱 Gathering fresh items...
+                </div>
+              ) : foods.length === 0 ? (
+                <div className="bg-white rounded-[2rem] border border-slate-100 p-10 text-center flex flex-col justify-center items-center h-64">
+                  <span className="text-6xl mb-6 block">🥣</span>
+                  <p className="font-black text-slate-800 text-xl tracking-tight">No food found</p>
+                </div>
+              ) : (
+                <div className="space-y-4 px-4 sm:px-0">
+                  {foods.map(f => (
+                    <div key={f._id} className="bg-white p-5 rounded-3xl ring-1 ring-slate-200 hover:ring-emerald-500/30 transition-all duration-300 hover:shadow-xl group">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1 min-w-0 pr-4">
+                          <h4 className="text-lg font-black text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1">{f.foodName}</h4>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 truncate">🏪 {f.providerId?.name || 'Local Provider'}</p>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${f.isExpired ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {f.isExpired ? 'Expired' : 'Live'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-4 py-3 px-4 bg-slate-50/50 rounded-2xl mb-5">
+                        <div className="flex flex-col flex-1">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Quantity</span>
+                          <span className="text-sm font-black text-slate-800">📦 {f.quantity} Servings</span>
+                        </div>
+                        <div className="w-px h-8 bg-slate-200"></div>
+                        <div className="flex flex-col flex-1">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Expires</span>
+                          <span className="text-xs font-black text-rose-500">
+                            {new Date(f.expiryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(f.expiryTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openLocation(f.providerId?.location?.lat ?? f.location?.lat, f.providerId?.location?.lng ?? f.location?.lng)}
+                          className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all ring-1 ring-inset ring-slate-100"
+                        >
+                          📍
+                        </button>
+                        <button
+                          disabled={hasRequested(f._id) || f.isExpired}
+                          
+                          className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] shadow-lg ${hasRequested(f._id) || f.isExpired ? 'bg-slate-100 text-slate-300 cursor-not-allowed shadow-none' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'}`}
+                        >
+                          {hasRequested(f._id) ? '✓ Requested' : '📬 Request Item'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-              {foods.map(f => {
-                const done = requested.includes(f._id)
-                return (
-                  <div key={f._id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-bold text-slate-900 text-sm">{f.name}</p>
-                        <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                          <IconStore className="w-3 h-3" /> {f.provider}
-                        </p>
-                      </div>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${CAT_STYLE[f.cat] ?? 'bg-slate-100 text-slate-600'}`}>{f.cat}</span>
-                    </div>
-                    <div className="flex gap-4 text-xs text-slate-500 mb-3">
-                      <span className="flex items-center gap-1">
-                        <IconBox className="w-3.5 h-3.5" /> {f.qty} servings
-                      </span>
-                      <span className="text-orange-500 font-semibold flex items-center gap-1">
-                        <IconClock className="w-3.5 h-3.5" /> {f.expiresIn} left
-                      </span>
-                    </div>
-                    <button
-                      disabled={done}
-                      onClick={() => request(f._id)}
-                      className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${done
-                        ? 'bg-slate-100 text-slate-400 cursor-default'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-500 active:scale-95'
-                        }`}
-                    >
-                      {done ? <><IconCheck className="w-3 h-3" /> Request Sent</> : 'Request Item'}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
 
-          <div className="text-center mt-10">
-            <button
-              onClick={() => navigate('/foods')}
-              className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-emerald-600 text-emerald-700 font-bold rounded-xl hover:bg-emerald-600 hover:text-white transition-all text-sm group"
-            >
-              View All Food Listings
-              <IconChevron className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+              {totalItems > 5 && (
+                <div className="flex justify-center mt-6 gap-2 px-4 sm:px-0">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-3 bg-white border border-emerald-600 text-emerald-600 font-black rounded-xl hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all uppercase tracking-widest text-xs disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page >= totalPages}
+                    className="flex-1 px-4 py-3 bg-emerald-600 text-white font-black rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm uppercase tracking-widest text-xs shadow-emerald-200"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

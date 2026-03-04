@@ -2,19 +2,12 @@ import React, { useState, useRef, useCallback, useEffect } from 'react'
 
 const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY
 
-/**
- * ImageUploader – drag-and-drop + click-to-browse multi-image uploader using ImgBB.
- * Props:
- *   label    string  – section label
- *   maxFiles number  – max images allowed (default 5)
- *   onUpload fn      – called with array of all successfully uploaded URLs
- */
+
 export default function ImageUploader({ label = 'Upload Images', maxFiles = 5, onUpload }) {
     const [files, setFiles] = useState([])   // { file, preview, status, url, error }
     const [dragging, setDragging] = useState(false)
     const inputRef = useRef()
 
-    // Notify parent whenever files change — done via useEffect to avoid setState-during-render
     useEffect(() => {
         const urls = files.filter(f => f.status === 'done').map(f => f.url)
         onUpload && onUpload(urls)

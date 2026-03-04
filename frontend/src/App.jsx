@@ -4,8 +4,11 @@ import Home from './pages/Home'
 import AdminDashboard from './pages/AdminDashboard'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ProviderDashboard from './pages/ProviderDashboard'
+import NGODashboard from './pages/NGODashboard'
 import Profile from './pages/Profile'
 import Footer from './components/Footer'
+import NotificationBell from './components/NotificationBell'
 import { ModalProvider } from './context/ModalContext'
 import { getUserFromToken, logout } from './utils/auth'
 
@@ -103,6 +106,8 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/provider" element={<RoleRoute role="provider"><ProviderDashboard /></RoleRoute>} />
+          <Route path="/ngo" element={<RoleRoute role="ngo"><NGODashboard /></RoleRoute>} />
           <Route path="/admin" element={<RoleRoute role="admin"><AdminDashboard /></RoleRoute>} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
