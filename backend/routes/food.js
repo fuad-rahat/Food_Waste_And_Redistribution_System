@@ -90,7 +90,6 @@ router.get('/available', async (req, res) => {
       ];
     }
 
-    // Fetch foods and populate provider
     let foods = await Food.find(query)
       .populate('providerId', 'name email location')
       .sort({ createdAt: -1 });
@@ -157,9 +156,7 @@ router.delete('/:id', auth, isProvider, isActiveUser, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this food post' });
     }
 
-    // Optional: Only allow deletion if status is 'available'? 
-    // Or allow anytime if the provider wants to retract it. 
-    // Usually better to only allow retractable if not already claimed/collected.
+   
     if (food.status !== 'available') {
       return res.status(400).json({ message: `Cannot delete food that is already ${food.status}` });
     }
