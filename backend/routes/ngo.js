@@ -66,10 +66,40 @@ router.put('/collect/:id', auth, isNGO, isActiveUser, async (req, res) => {
 });
 
 // PUT /api/ngo/collection/:id/complete — mark pickup as completed
-
+router.put('/collection/:id/complete', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const col = await Collection.findById(req.params.id);
+    if (!col) return res.status(404).json({ message: 'Collection not found' });
+    if (String(col.ngoId) !== req.user.id) return res.status(403).json({ message: 'Not allowed' });
+    col.pickup_status = 'completed';
+    await col.save();
+    res.json({ message: 'Pickup marked complete', collection: col });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // POST /api/ngo/request/:foodId — NGO requests food
-
+router.post('/request/:foodId', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const { message, requestedAmount } = req.body;
+    const food = await Food.findById(req.params.foodId);
+    if (!food) return res.status(404).json({ message: 'Food not found' });
+    const existing = await Request.findOne({ foodId: req.params.foodId, ngoId: req.user.id });
+    if (existing) return res.status(400).json({ message: 'Already requested' });
+    const reqDoc = new Request({
+      foodId: req.params.foodId,
+      providerId: food.providerId,
+      ngoId: req.user.id,
+      message,
+      requestedAmount: requestedAmount || 0
+    });
+    await reqDoc.save();
+    res.json({ message: 'Requested', request: reqDoc });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // GET /api/ngo/requests — NGO's own requests
 
