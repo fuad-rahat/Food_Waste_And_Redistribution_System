@@ -23,7 +23,10 @@ const Badge = ({ children, color }) => {
   )
 }
 
-// tanvir will work here
+const roleBadge = (role) => {
+  const map = { provider: 'blue', ngo: 'purple', admin: 'gray' }
+  return <Badge color={map[role] || 'gray'}>{role}</Badge>
+}
 
 const thClass = 'text-left py-4 px-5 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 border-b border-slate-100 whitespace-nowrap'
 const tdClass = 'py-3 px-5 border-b border-slate-50 text-slate-700'
