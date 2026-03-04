@@ -66,6 +66,69 @@ router.delete('/user/:id/delete', auth, isAdmin, async (req, res) => {
 
 // ─── FOOD MANAGEMENT ────────────────────────────────────────────────────────
 
+// GET /api/admin/foods — all foods
+router.get('/foods', auth, isAdmin, async (req, res) => {
+  try {
+    const foods = await Food.find().populate('providerId', 'name').sort({ createdAt: -1 });
+    res.json({ foods });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// DELETE /api/admin/food/:id
+router.delete('/food/:id', auth, isAdmin, async (req, res) => {
+  try {
+    await Food.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Food deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ─── STATS & PROOFS ────────────────────────────────────────────────────────
+
+// GET /api/admin/stats — dashboard statistics
+router.get('/stats', auth, isAdmin, async (req, res) => {
+  try {
+    const totalFood = await Food.countDocuments();
+    const totalCollected = await Food.countDocuments({ status: 'collected' });
+    const totalExpired = await Food.countDocuments({ status: 'expired' });
+    const activeProviders = await User.countDocuments({ role: 'provider', isActive: true });
+    const activeNGOs = await User.countDocuments({ role: 'ngo', isActive: true });
+    const pendingVerification = await User.countDocuments({ verificationStatus: 'pending', role: { $in: ['provider', 'ngo'] } });
+
+    res.json({
+      totalFood,
+      totalCollected,
+      totalExpired,
+      activeProviders,
+      activeNGOs,
+      pendingVerification,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /api/admin/distribution-proofs
+router.get('/distribution-proofs', auth, isAdmin, async (req, res) => {
+  try {
+    const proofs = await DistributionProof.find()
+      .populate('ngoId', 'name email')
+      .populate({
+        path: 'collectionId',
+        populate: [
+          { path: 'foodId', select: 'foodName' },
+          { path: 'providerId', select: 'name' }
+        ]
+      })
+      .sort({ createdAt: -1 });
+    res.json({ proofs });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 // ─── USER PROFILE ────────────────────────────────────────────────────────────
 
 // GET /api/admin/user/:id/profile

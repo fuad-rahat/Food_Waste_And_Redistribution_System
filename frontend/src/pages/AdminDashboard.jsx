@@ -101,9 +101,9 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'pending', label: `⏳ Pending (${stats.pendingVerification || 0})` },
     { id: 'users', label: '👥 All Users' },
-    { id: 'foods', label: '🍱 Foods' },
-    { id: 'proofs', label: '📸 Distribution Proofs' },
-    { id: 'stats', label: '📊 Stats' },
+    // { id: 'foods', label: '🍱 Foods' },
+    // { id: 'proofs', label: '📸 Distribution Proofs' },
+    // { id: 'stats', label: '📊 Stats' },
   ]
 
   return (
@@ -121,8 +121,8 @@ export default function AdminDashboard() {
           { value: stats.pendingVerification, label: 'Pending Verify', bg: 'bg-rose-50', ring: 'ring-rose-200/50', text: 'text-rose-600', sub: 'text-rose-400' },
           { value: stats.activeProviders, label: 'Providers', bg: 'bg-emerald-50', ring: 'ring-emerald-200/50', text: 'text-emerald-600', sub: 'text-emerald-400' },
           { value: stats.activeNGOs, label: 'Active NGOs', bg: 'bg-indigo-50', ring: 'ring-indigo-200/50', text: 'text-indigo-600', sub: 'text-indigo-400' },
-          { value: stats.totalFood, label: 'Total Posts', bg: 'bg-slate-50', ring: 'ring-slate-200/50', text: 'text-slate-800', sub: 'text-slate-400' },
-          { value: stats.totalCollected, label: 'Food Collected', bg: 'bg-amber-50', ring: 'ring-amber-200/50', text: 'text-amber-600', sub: 'text-amber-400', span: true },
+          // { value: stats.totalFood, label: 'Total Posts', bg: 'bg-slate-50', ring: 'ring-slate-200/50', text: 'text-slate-800', sub: 'text-slate-400' },
+          // { value: stats.totalCollected, label: 'Food Collected', bg: 'bg-amber-50', ring: 'ring-amber-200/50', text: 'text-amber-600', sub: 'text-amber-400', span: true },
         ].map(s => (
           <div key={s.label} className={`${s.bg} ring-1 ${s.ring} rounded-2xl border border-slate-100 p-5 ${s.span ? 'col-span-2 lg:col-span-1' : ''}`}>
             <div className={`text-3xl font-black ${s.text} mb-1`}>{s.value || 0}</div>
