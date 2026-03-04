@@ -129,9 +129,44 @@ router.get('/collections', auth, isNGO, isActiveUser, async (req, res) => {
 });
 
 // POST /api/ngo/distribution-proof/:collectionId — upload distribution proof
+router.post('/distribution-proof/:collectionId', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const { proofImages, description } = req.body;
+    if (!proofImages || !Array.isArray(proofImages) || proofImages.length === 0) {
+      return res.status(400).json({ message: 'At least one proof image is required' });
+    }
+    const col = await Collection.findById(req.params.collectionId);
+    if (!col) return res.status(404).json({ message: 'Collection not found' });
+    if (String(col.ngoId) !== req.user.id) return res.status(403).json({ message: 'Not allowed' });
 
+    const proof = new DistributionProof({
+      collectionId: req.params.collectionId,
+      ngoId: req.user.id,
+      proofImages,
+      description
+    });
+    await proof.save();
+
+    // Auto-complete the pickup status
+    col.pickup_status = 'completed';
+    await col.save();
+
+    res.json({ message: 'Distribution proof uploaded', proof });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // GET /api/ngo/distribution-proofs — NGO's uploaded proofs
-
+router.get('/distribution-proofs', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const proofs = await DistributionProof.find({ ngoId: req.user.id })
+      .populate({ path: 'collectionId', populate: { path: 'foodId' } })
+      .sort({ uploadDate: -1 });
+    res.json({ proofs });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router;
