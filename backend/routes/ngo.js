@@ -30,7 +30,19 @@ router.get('/nearby', auth, isNGO, isActiveUser, async (req, res) => {
 });
 
 // PUT /api/ngo/claim/:id
-
+router.put('/claim/:id', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const food = await Food.findById(req.params.id);
+    if (!food) return res.status(404).json({ message: 'Not found' });
+    if (food.status !== 'available') return res.status(400).json({ message: 'Not available' });
+    food.status = 'claimed';
+    food.claimedBy = req.user.id;
+    await food.save();
+    res.json({ message: 'Claimed', food });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // PUT /api/ngo/collect/:id
 
