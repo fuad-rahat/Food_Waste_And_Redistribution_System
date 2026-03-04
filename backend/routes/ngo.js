@@ -102,10 +102,31 @@ router.post('/request/:foodId', auth, isNGO, isActiveUser, async (req, res) => {
 });
 
 // GET /api/ngo/requests — NGO's own requests
-
+router.get('/requests', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const list = await Request.find({ ngoId: req.user.id })
+      .populate('foodId')
+      .populate('providerId', 'name')
+      .populate('collectionId')
+      .sort({ createdAt: -1 });
+    res.json({ list });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // GET /api/ngo/collections — NGO's own collections
-
+router.get('/collections', auth, isNGO, isActiveUser, async (req, res) => {
+  try {
+    const collections = await Collection.find({ ngoId: req.user.id })
+      .populate('foodId')
+      .populate('providerId', 'name email')
+      .sort({ collectedAt: -1 });
+    res.json({ collections });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // POST /api/ngo/distribution-proof/:collectionId — upload distribution proof
 
