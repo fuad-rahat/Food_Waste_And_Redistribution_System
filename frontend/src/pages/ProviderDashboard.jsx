@@ -192,91 +192,118 @@ export default function ProviderDashboard() {
 
         {/* REQUESTS */}
         {tab === 'requests' && (
-          <div className="animate-fadeIn pb-12">
+          <div className="animate-fadeIn pb-24">
             {Object.keys(requests).length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-                <span className="text-6xl mb-4 block">📬</span>
-                <p className="text-slate-400 font-bold mb-2">No requests yet</p>
-                <p className="text-slate-300 text-sm">Nearby NGOs will see your donations soon!</p>
+              <div className="text-center py-20 bg-white rounded-[40px] border border-dashed border-slate-200 flex flex-col items-center justify-center">
+                <span className="text-7xl mb-6 block">📮</span>
+                <p className="text-slate-500 font-black text-xl tracking-tight">Your inbox is clear</p>
+                <p className="text-slate-400 font-medium text-sm mt-2 max-w-xs">When NGOs request your surplus food, they'll appear here for your approval.</p>
               </div>
             ) : (
-              <div className="space-y-12">
+              <div className="space-y-16">
                 {Object.entries(requests).map(([foodId, group]) => (
-                  <div key={foodId} className="bg-slate-50/50 rounded-[40px] p-1 border border-slate-100 shadow-inner">
-                    <div className="bg-white rounded-[36px] p-6 shadow-sm mb-4 border border-slate-100 flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl shadow-sm">🍱</div>
-                        <div>
-                          <h4 className="text-xl font-black text-slate-800 tracking-tight">{group.food.foodName}</h4>
-                          <div className="flex items-center gap-3 mt-1">
-                             <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">📦 Left: {group.food.quantity}</span>
-                             <span className="text-[10px] font-medium text-slate-400">⏰ Expires {new Date(group.food.expiryTime).toLocaleDateString()}</span>
+                  <div key={foodId} className="relative">
+                    {/* Food Summary Header */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 px-6 py-8 bg-white rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-110 transition-transform duration-700" />
+                       <div className="flex items-center gap-5 relative">
+                          <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-emerald-100">🍱</div>
+                          <div>
+                             <h4 className="text-2xl font-black text-slate-800 tracking-tighter">{group.food.foodName}</h4>
+                             <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                                <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Available: {group.food.quantity} units</span>
+                                <span className="text-slate-400 text-[10px] font-medium uppercase tracking-widest">Posted {new Date(group.food.createdAt).toLocaleDateString()}</span>
+                             </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                        {group.requests.length} Request{group.requests.length !== 1 ? 's' : ''}
-                      </div>
+                       </div>
+                       <div className="flex items-center gap-4 relative">
+                          <div className="text-right hidden sm:block">
+                             <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Active Requests</span>
+                             <span className="text-2xl font-black text-emerald-600">{group.requests.filter(r => r.status === 'pending').length}</span>
+                          </div>
+                          <div className="h-10 w-px bg-slate-100 hidden sm:block mx-2" />
+                          <span className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest ${group.food.status === 'available' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-50 text-slate-400'}`}>
+                            {group.food.status}
+                          </span>
+                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 pb-4">
+                    {/* NGO Request Cards */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
                       {group.requests.map(req => {
                         const isPending = req.status === 'pending';
                         return (
-                          <div key={req._id} className={`bg-white rounded-3xl p-6 border transition-all ${isPending ? 'border-slate-100 shadow-sm hover:shadow-md' : 'border-slate-50 opacity-80'}`}>
-                            <div className="flex justify-between items-start mb-6">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black text-lg">
-                                  {req.ngoId?.name?.charAt(0) || 'N'}
-                                </div>
-                                <div>
-                                  <h5 className="font-bold text-slate-800 leading-none mb-1">{req.ngoId?.name || 'NGO'}</h5>
-                                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{req.ngoId?.email}</span>
-                                </div>
-                              </div>
-                              <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-tighter rounded-md ${req.status === 'pending' ? 'bg-amber-100 text-amber-700' : req.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                {req.status}
-                              </span>
+                          <div key={req._id} className={`bg-white rounded-[2.5rem] p-8 border transition-all duration-300 relative ${isPending ? 'border-indigo-100 shadow-xl shadow-indigo-50/20' : 'border-slate-50 opacity-70 grayscale-[0.3]'}`}>
+                            
+                            <div className="flex justify-between items-start mb-8">
+                               <div className="flex items-center gap-4">
+                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm ${isPending ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    {req.ngoId?.name?.charAt(0) || 'N'}
+                                  </div>
+                                  <div>
+                                     <h5 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-1.5">{req.ngoId?.name || 'NGO Partner'}</h5>
+                                     <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                        {req.ngoId?.email}
+                                     </p>
+                                  </div>
+                               </div>
+                               <div className="text-right">
+                                  <span className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl ${isPending ? 'bg-amber-100 text-amber-600' : req.status === 'accepted' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                                    {req.status}
+                                  </span>
+                                  <p className="text-[9px] font-bold text-slate-300 uppercase mt-2">{new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
+                               </div>
                             </div>
 
-                            <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between mb-6">
-                              <div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase block mb-0.5">Requested</span>
-                                <span className="text-xl font-black text-slate-700">{req.requestedAmount}</span>
+                            {/* NGO Message if present */}
+                            {req.message && (
+                              <div className="mb-8 p-5 bg-slate-50 rounded-2xl border border-slate-100 relative">
+                                 <div className="absolute top-0 right-6 -translate-y-1/2 bg-white px-3 py-1 rounded-full border border-slate-100 text-[9px] font-black text-emerald-600 uppercase tracking-widest">Message</div>
+                                 <p className="text-sm font-medium text-slate-600 leading-relaxed italic">"{req.message}"</p>
                               </div>
-                              <div className="text-right">
-                                <span className="text-[10px] font-black text-slate-400 uppercase block mb-0.5">{isPending ? 'Grant Now' : 'Granted'}</span>
-                                {isPending ? (
-                                  <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm overflow-hidden">
-                                     <input 
-                                       type="number" 
-                                       min={0}
-                                       max={group.food.quantity}
-                                       className="w-16 text-center font-black text-emerald-600 focus:outline-none py-1"
-                                       value={grantAmounts[req._id] ?? req.requestedAmount}
-                                       onChange={(e) => setGrantAmounts({ ...grantAmounts, [req._id]: e.target.value })}
-                                     />
-                                  </div>
-                                ) : (
-                                  <span className="text-xl font-black text-slate-700">{req.grantedAmount || 0}</span>
-                                )}
-                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4 mb-8">
+                               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Requested Qty</span>
+                                  <span className="text-xl font-black text-slate-700">{req.requestedAmount} units</span>
+                               </div>
+                               <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
+                                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">{isPending ? 'Grant Amount' : 'Granted'}</span>
+                                  {isPending ? (
+                                    <div className="flex items-center gap-2">
+                                       <input 
+                                         type="number" 
+                                         min={0}
+                                         max={group.food.quantity}
+                                         className="w-full bg-transparent border-none p-0 text-xl font-black text-indigo-700 focus:ring-0"
+                                         value={grantAmounts[req._id] ?? req.requestedAmount}
+                                         onChange={(e) => setGrantAmounts({ ...grantAmounts, [req._id]: e.target.value })}
+                                       />
+                                       <span className="text-[10px] font-black text-indigo-300">EDIT</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xl font-black text-indigo-700">{req.grantedAmount || 0} items</span>
+                                  )}
+                               </div>
                             </div>
 
                             {isPending && (
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => acceptRequest(req._id, req.requestedAmount)}
-                                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-bold text-xs shadow-lg shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                >
-                                  ✅ Accept
-                                </button>
-                                <button 
-                                  onClick={() => rejectRequest(req._id)}
-                                  className="bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 px-4 py-3 rounded-2xl font-bold text-xs transition-all active:scale-95"
-                                >
-                                  Dismiss
-                                </button>
+                              <div className="flex items-center gap-3">
+                                 <button 
+                                   onClick={() => acceptRequest(req._id, req.requestedAmount)}
+                                   className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                 >
+                                   🚀 Accept & Grant
+                                 </button>
+                                 <button 
+                                   onClick={() => rejectRequest(req._id)}
+                                   className="px-6 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-400 py-4 rounded-2xl font-black text-sm transition-all active:scale-95 flex items-center justify-center"
+                                   title="Reject Request"
+                                 >
+                                    Dismiss
+                                 </button>
                               </div>
                             )}
                           </div>
