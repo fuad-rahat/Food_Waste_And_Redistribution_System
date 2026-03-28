@@ -594,7 +594,7 @@ export default function Home() {
                         </button>
                         <button
                           disabled={hasRequested(f._id) || f.isExpired}
-                          
+                          onClick={() => requestFood(f._id, f.quantity)}
                           className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] shadow-lg ${hasRequested(f._id) || f.isExpired ? 'bg-slate-100 text-slate-300 cursor-not-allowed shadow-none' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'}`}
                         >
                           {hasRequested(f._id) ? '✓ Requested' : '📬 Request Item'}

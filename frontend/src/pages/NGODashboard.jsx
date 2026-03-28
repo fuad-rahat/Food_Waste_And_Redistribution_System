@@ -222,14 +222,105 @@ export default function NGODashboard() {
         )}
 
         {/* ── MY REQUESTS ── */}
-        
+        {tab === 'requests' && (
+          <div className="space-y-8 pb-12">
+            {myRequests.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 flex flex-col items-center justify-center">
+                <span className="text-6xl mb-4 block">📬</span>
+                <p className="text-slate-400 font-bold">No requests yet</p>
+                <p className="text-slate-300 text-sm mt-2">Browse nearby items and send requests to providers.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {myRequests.map(req => {
+                   const colId = req.collectionId?._id;
+                   const ps = pickupState[req._id] || {};
+                   const proofsStateObj = proofState[colId] || {};
+                   const hasPr = hasProof(colId);
 
-        {/* ── MY PROOFS ── */}
-        
-      </div>
+                   return (
+                     <div key={req._id} className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                       <div className="flex justify-between items-start mb-6">
+                         <div>
+                            <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest mb-2 inline-block ${reqStatusColor[req.status]}`}>
+                              {req.status}
+                            </span>
+                            <h4 className="text-xl font-black text-slate-800">{req.foodId?.foodName || 'Food Item'}</h4>
+                            <p className="text-slate-400 font-medium text-xs">Provider: <span className="font-bold">{req.providerId?.name || '—'}</span></p>
+                         </div>
+                         <div className="text-right">
+                            <span className="text-[10px] font-black text-slate-400 uppercase block mb-0.5">Requested</span>
+                            <span className="text-lg font-black text-slate-700">{req.requestedAmount} units</span>
+                         </div>
+                       </div>
+
+                       {req.status === 'accepted' && (
+                         <div className="pt-6 border-t border-slate-50 space-y-6">
+                            <div className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/50 text-emerald-700">
+                               <div className="flex items-center gap-3">
+                                  <span className="text-xl">✅</span>
+                                  <div>
+                                     <p className="text-xs font-black uppercase tracking-tight">Request Accepted!</p>
+                                     <p className="text-[10px] font-medium">Provider granted: <span className="font-black">{req.grantedAmount} units</span></p>
+                                  </div>
+                               </div>
+                               {req.collectionId?.pickup_status === 'pending' && !ps.done && (
+                                 <button 
+                                   onClick={() => handlePickup(req)}
+                                   disabled={ps.loading}
+                                   className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-emerald-100 transition-all hover:bg-emerald-700 active:scale-95"
+                                 >
+                                   {ps.loading ? 'Updating...' : 'Confirm Pickup'}
+                                 </button>
+                               )}
+                               {(req.collectionId?.pickup_status === 'completed' || ps.done) && (
+                                 <span className="text-xs font-black uppercase font-bold text-emerald-700">Picked Up 🤝</span>
+                               )}
+                            </div>
+
+                            {/* Proof Upload (Only if picked up and no proof yet) */}
+                            {(req.collectionId?.pickup_status === 'completed' || ps.done) && !hasPr && !proofsStateObj.done && (
+                              <div className="bg-indigo-50/50 rounded-3xl p-6 border border-indigo-100/50 animate-fadeIn">
+                                 <div className="flex items-center gap-3 mb-4">
+                                   <span className="text-lg">📸</span>
+                                   <p className="text-sm font-black text-indigo-900">Distribution Proof Required</p>
+                                 </div>
+                                 <ImageUploader onUpload={(urls) => setProofImages(colId, urls)} multiple={true} initialImages={proofsStateObj.images || []} />
+                                 <textarea 
+                                   placeholder="Where did you distribute this? (e.g. Slum area, School, Orphanage...)"
+                                   className="w-full mt-4 p-4 bg-white border border-indigo-100 rounded-2xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all min-h-[80px]"
+                                   value={proofsStateObj.desc || ''}
+                                   onChange={e => setProofDesc(colId, e.target.value)}
+                                 />
+                                 <button 
+                                   onClick={() => submitProof(colId)}
+                                   disabled={proofsStateObj.submitting}
+                                   className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl font-black text-xs shadow-xl shadow-indigo-100 transition-all active:scale-95"
+                                 >
+                                   {proofsStateObj.submitting ? 'Submitting...' : 'Upload 🚀'}
+                                 </button>
+                              </div>
+                            )}
+
+                            {(hasPr || proofsStateObj.done) && (
+                              <div className="p-4 bg-violet-50 rounded-2xl border border-violet-100 text-violet-700 flex items-center gap-3">
+                                 <span className="text-xl">🌟</span>
+                                 <p className="text-xs font-black uppercase tracking-tight">Proof Submitted Successfully!</p>
+                              </div>
+                            )}
+                         </div>
+                       )}
+                     </div>
+                   );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        {/* ── MY PROOFS / GALLERY ── */}
+             </div>
 
       {/* ── REQUEST FOOD MODAL ── */}
-      
-    </div>
+         </div>
   )
 }
