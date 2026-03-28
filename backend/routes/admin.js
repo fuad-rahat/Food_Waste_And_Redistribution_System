@@ -91,9 +91,30 @@ router.delete('/food/:id', auth, isAdmin, async (req, res) => {
 // GET /api/admin/stats — dashboard statistics
 router.get('/stats', auth, isAdmin, async (req, res) => {
   try {
+    const now = new Date();
     const totalFood = await Food.countDocuments();
-    const totalCollected = await Food.countDocuments({ status: 'collected' });
-    const totalExpired = await Food.countDocuments({ status: 'expired' });
+    
+    // Sum quantities for items claimed by NGOs and confirmed by Providers (Accepted Requests)
+    const rescuedAggr = await Request.aggregate([
+      { $match: { status: 'accepted' } },
+      { $group: { _id: null, total: { $sum: '$grantedAmount' } } }
+    ]);
+    const totalCollected = rescuedAggr.length > 0 ? rescuedAggr[0].total : 0;
+
+    // Sum quantities for expired items (either status 'expired' or time passed)
+    const expiredAggr = await Food.aggregate([
+      { 
+        $match: { 
+          $or: [
+            { status: 'expired' },
+            { status: 'available', expiryTime: { $lt: now } }
+          ] 
+        } 
+      },
+      { $group: { _id: null, total: { $sum: '$quantity' } } }
+    ]);
+    const totalExpired = expiredAggr.length > 0 ? expiredAggr[0].total : 0;
+
     const activeProviders = await User.countDocuments({ role: 'provider', isActive: true });
     const activeNGOs = await User.countDocuments({ role: 'ngo', isActive: true });
     const pendingVerification = await User.countDocuments({ verificationStatus: 'pending', role: { $in: ['provider', 'ngo'] } });
@@ -107,6 +128,7 @@ router.get('/stats', auth, isAdmin, async (req, res) => {
       pendingVerification,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
