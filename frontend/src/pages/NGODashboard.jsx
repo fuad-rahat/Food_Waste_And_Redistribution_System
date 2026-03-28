@@ -318,9 +318,78 @@ export default function NGODashboard() {
           </div>
         )}
         {/* ── MY PROOFS / GALLERY ── */}
-             </div>
+        {tab === 'proofs' && (
+          <div className="space-y-8 pb-12">
+            {proofs.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 flex flex-col items-center justify-center">
+                <span className="text-6xl mb-4 block">📸</span>
+                <p className="text-slate-400 font-bold">Your gallery is empty</p>
+                <p className="text-slate-300 text-sm mt-2">Proofs of your food distribution will appear here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {proofs.map(p => (
+                  <div key={p._id} className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden">
+                    <div className="grid grid-cols-2 gap-2 mb-4 aspect-video">
+                       {p.proofImages?.map((url, i) => (
+                         <div key={i} className={`relative rounded-2xl overflow-hidden ${p.proofImages.length === 1 ? 'col-span-2' : ''}`}>
+                            <img src={url} alt="Proof" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                         </div>
+                       ))}
+                    </div>
+                    <div className="space-y-3">
+                       <h5 className="font-black text-slate-800 tracking-tight leading-snug">{p.collectionId?.foodId?.foodName || 'Donation Item'}</h5>
+                       <p className="text-xs text-slate-500 font-medium line-clamp-3">"{p.description || 'No description provided'}"</p>
+                       <p className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 py-1 px-3 rounded-full inline-block">Distributed on {new Date(p.uploadDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}      </div>
 
       {/* ── REQUEST FOOD MODAL ── */}
-         </div>
+      {requestModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setRequestModal(null)} />
+          <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 md:p-10 animate-scaleIn">
+            <h3 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-3">
+              <span className="bg-emerald-100 p-2 rounded-xl text-xl">🥘</span> Request Item
+            </h3>
+            <p className="text-slate-500 font-medium mb-6">Requesting <span className="text-slate-800 font-bold">{requestModal.foodName}</span> from <span className="text-slate-800 font-bold">{requestModal.providerId?.name || 'Provider'}</span></p>
+            
+            <div className="space-y-6">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400">Amount Needed (Max: {requestModal.quantity})</label>
+                <div className="relative">
+                   <input type="number" min={1} max={requestModal.quantity} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700 pr-12" value={reqAmount} onChange={e => setReqAmount(e.target.value)} />
+                   <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 font-bold">qty</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400">Add a message (Optional)</label>
+                <textarea className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700 min-h-[120px]" placeholder="Explain why you need this or coordinate pickup..." value={reqMsg} onChange={e => setReqMsg(e.target.value)} />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button 
+                   onClick={sendRequest}
+                   className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  🚀 Submit Request
+                </button>
+                <button 
+                   onClick={() => setRequestModal(null)}
+                   className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}    </div>
   )
 }
