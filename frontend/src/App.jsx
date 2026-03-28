@@ -7,6 +7,7 @@ import Register from './pages/Register'
 import ProviderDashboard from './pages/ProviderDashboard'
 import NGODashboard from './pages/NGODashboard'
 import Profile from './pages/Profile'
+import Foods from './pages/Foods'
 import Footer from './components/Footer'
 import NotificationBell from './components/NotificationBell'
 import { ModalProvider } from './context/ModalContext'
@@ -44,6 +45,7 @@ function AppContent() {
         {user && user.role === 'provider' && <NavLink to="/provider" onClick={() => setIsMenuOpen(false)} className={({ isActive }) => isActive ? activeClass : inactiveClass}>Dashboard</NavLink>}
         {user && user.role === 'ngo' && <NavLink to="/ngo" onClick={() => setIsMenuOpen(false)} className={({ isActive }) => isActive ? activeClass : inactiveClass}>Dashboard</NavLink>}
         {user && user.role === 'admin' && <NavLink to="/admin" onClick={() => setIsMenuOpen(false)} className={({ isActive }) => isActive ? activeClass : inactiveClass}>Admin Panel</NavLink>}
+        <NavLink to="/foods" onClick={() => setIsMenuOpen(false)} className={({ isActive }) => isActive ? activeClass : inactiveClass}>Explore Food</NavLink>
         {user && <NavLink to="/profile" onClick={() => setIsMenuOpen(false)} className={({ isActive }) => isActive ? activeClass : inactiveClass}>Profile</NavLink>}
       </>
     );
@@ -110,6 +112,7 @@ function AppContent() {
           <Route path="/ngo" element={<RoleRoute role="ngo"><NGODashboard /></RoleRoute>} />
           <Route path="/admin" element={<RoleRoute role="admin"><AdminDashboard /></RoleRoute>} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/foods" element={<Foods />} />
         </Routes>
       </main>
       <Footer />
