@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000/',
+        target: 'https://food-waste-and-redistribution-syste.vercel.app/',
         changeOrigin: true,
         secure: false
       }
