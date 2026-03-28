@@ -24,6 +24,12 @@ Before you begin, ensure you have the following installed:
 - [npm](https://www.npmjs.com/) (v8.x or higher)
 - [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account or local MongoDB instance.
 
+## 🚀 Live Deployment
+
+The system is now live at:
+- **Frontend**: [https://foodrescuebd.vercel.app](https://foodrescuebd.vercel.app)
+- **Backend API**: [https://foodrescuebd-backend.vercel.app](https://foodrescuebd-backend.vercel.app)
+
 ## ⚙️ Installation & Setup
 
 ### 1. Clone the Repository
@@ -40,7 +46,7 @@ npm install
 ```
 
 Create a `.env` file in the `backend` folder:
-```env
+```bash
 PORT=5000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
@@ -54,26 +60,21 @@ npm install
 ```
 
 Create a `.env` file in the `frontend` folder:
-```env
-VITE_API_BASE_URL=http://localhost:5000
+```bash
+VITE_API_BASE_URL=https://foodrescuebd-backend.vercel.app
 VITE_IMGBB_API_KEY=your_imgbb_api_key
 ```
 
 ## 🏃‍♂️ Running the Application
 
-### Start the Backend
-From the `backend` directory:
-```bash
-npm run dev
-```
-The server will run at `http://localhost:5000`.
+### Local Development
+- Start the backend: `npm run dev` in the `/backend` directory.
+- Start the frontend: `npm run dev` in the `/frontend` directory.
 
-### Start the Frontend
-From the `frontend` directory:
-```bash
-npm run dev
-```
-The application will be accessible at `http://localhost:5173` (or the port shown in your terminal).
+### Production Execution
+The application uses **Vercel** for serverless deployment.
+- Frontend sub-routes are handled by `frontend/vercel.json`.
+- Backend API routes are routed to `server.js` via `backend/vercel.json`.
 
 ## 📂 Project Structure
 
