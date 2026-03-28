@@ -16,7 +16,7 @@ router.get('/nearby', auth, isNGO, isActiveUser, async (req, res) => {
     const lng = parseFloat(req.query.lng);
     const maxKm = parseFloat(req.query.maxKm) || 10;
     const now = new Date();
-    const foods = await Food.find({ status: 'available', expiryTime: { $gt: now } });
+    const foods = await Food.find({ status: 'available', expiryTime: { $gt: now } }).populate('providerId', 'name location email');
     const list = foods.map(f => {
       const dist = haversineDistance(lat, lng, f.location.lat, f.location.lng);
       const hoursToExpiry = (new Date(f.expiryTime) - now) / (1000 * 60 * 60);

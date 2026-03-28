@@ -30,7 +30,12 @@ export default function NGODashboard() {
   useEffect(() => {
     fetchMyRequests()
     fetchProofs()
+    getLocation()
   }, [])
+
+  useEffect(() => {
+    if (lat && lng) fetchNearby()
+  }, [lat, lng])
 
   const getLocation = () => {
     if (!navigator.geolocation) return
@@ -196,26 +201,62 @@ export default function NGODashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {list.map(item => (
-                  <div key={item.food._id} className="bg-white rounded-3xl p-6 ring-1 ring-slate-200 hover:ring-emerald-500/20 transition-all shadow-sm hover:shadow-md flex flex-col h-full">
-                    <div className="flex justify-between items-start mb-4 gap-2">
-                      <h4 className="text-lg font-bold truncate pr-2 text-slate-800">{item.food.foodName}</h4>
-                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-full shrink-0 ${statusColor[item.food.status] || 'bg-slate-100 text-slate-700'}`}>{item.food.status}</span>
-                    </div>
-                    <div className="font-medium text-slate-500 flex flex-col gap-1.5 text-sm mb-4 flex-grow">
-                      <span className="flex items-center gap-1.5">📦 {item.food.quantity} units</span>
-                      <span className="flex items-center gap-1.5 text-emerald-600 font-black">📍 {item.distanceKm.toFixed(2)} km</span>
-                      <span className="flex items-center gap-1.5">⏰ {item.hoursToExpiry.toFixed(1)}h left</span>
-                      {item.food.details && <p className="text-xs mt-2 text-slate-600 bg-slate-50 p-3 rounded-xl break-words line-clamp-2">"{item.food.details}"</p>}
-                    </div>
+                {list.map(item => {
+                  const p = item.food.providerId;
+                  const priorityLevel = item.priority < 2 ? 'High' : item.priority < 5 ? 'Medium' : 'Lower';
+                  const priorityColor = item.priority < 2 ? 'bg-rose-100 text-rose-700' : item.priority < 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
 
-                    <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <button className="py-2.5 px-3 bg-white border border-blue-200 hover:bg-blue-50 text-blue-500 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex justify-center items-center text-xs" onClick={() => claim(item.food._id)}>Claim</button>
-                      <button className="py-2.5 px-3 bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-500 font-bold rounded-xl shadow-sm transition-all active:scale-95 flex justify-center items-center text-xs" onClick={() => collect(item.food._id)}>Collect</button>
-                      <button className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all active:scale-95 flex justify-center items-center text-xs" onClick={() => setRequestModal(item.food)}>Request</button>
+                  return (
+                    <div key={item.food._id} className="bg-white rounded-[2.5rem] p-8 ring-1 ring-slate-100 hover:ring-emerald-500/20 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col h-full group">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex-1 pr-4 truncate">
+                           <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg mb-2 inline-block ${priorityColor}`}>
+                             {priorityLevel} Priority
+                           </span>
+                           <h4 className="text-xl font-black text-slate-800 tracking-tight leading-none truncate group-hover:text-emerald-600 transition-colors">{item.food.foodName}</h4>
+                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2 flex items-center gap-1">
+                              🏪 {p?.name || 'Local Provider'}
+                           </p>
+                        </div>
+                        <div className="text-right">
+                           <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded-md ${statusColor[item.food.status] || 'bg-slate-100 text-slate-700'}`}>
+                             {item.food.status}
+                           </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mb-6">
+                         <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 underline decoration-dotted">Distance</span>
+                            <span className="text-sm font-black text-emerald-600 block leading-none">📍 {item.distanceKm.toFixed(2)} km</span>
+                         </div>
+                         <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 underline decoration-dotted">Expires In</span>
+                            <span className={`text-sm font-black block leading-none ${item.hoursToExpiry < 1 ? 'text-rose-500' : 'text-slate-700'}`}>
+                               ⏰ {item.hoursToExpiry.toFixed(1)}h
+                            </span>
+                         </div>
+                      </div>
+
+                      <div className="mb-6 flex-grow">
+                         <div className="flex items-center gap-3 p-3 bg-emerald-50/30 rounded-2xl border border-emerald-100/30">
+                            <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center font-bold text-xs">📦</div>
+                            <div>
+                               <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Available Qty</p>
+                               <p className="text-sm font-black text-emerald-700 leading-none">{item.food.quantity} servings</p>
+                            </div>
+                         </div>
+                         {item.food.details && <p className="text-xs mt-4 text-slate-500 font-medium leading-relaxed line-clamp-2 px-1 italic">"{item.food.details}"</p>}
+                      </div>
+
+                      <div className="pt-6 border-t border-slate-50 grid grid-cols-3 gap-2">
+                        <button className="py-3 px-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-black uppercase tracking-widest rounded-xl shadow-sm transition-all active:scale-95 text-[9px]" onClick={() => claim(item.food._id)}>Claim</button>
+                        <button className="py-3 px-1.5 bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-600 font-black uppercase tracking-widest rounded-xl shadow-sm transition-all active:scale-95 text-[9px]" onClick={() => collect(item.food._id)}>Collect</button>
+                        <button className="py-3 px-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-100 transition-all active:scale-95 text-[9px]" onClick={() => setRequestModal(item.food)}>Request</button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
