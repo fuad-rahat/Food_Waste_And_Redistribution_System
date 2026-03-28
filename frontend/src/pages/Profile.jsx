@@ -61,7 +61,20 @@ export default function Profile() {
   const [foods, setFoods] = useState([])
   const [groupedRequests, setGrouped] = useState({})
   const [requests, setRequests] = useState([])
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({ name: '', email: '', lat: 0, lng: 0 })
   const user = getUserFromToken()
+
+  useEffect(() => {
+    if (userData) {
+      setEditData({
+        name: userData.name || '',
+        email: userData.email || '',
+        lat: userData.location?.lat || 0,
+        lng: userData.location?.lng || 0
+      })
+    }
+  }, [userData])
 
   useEffect(() => { if (user) loadProfile() }, [])
 
@@ -82,6 +95,22 @@ export default function Profile() {
         setRequests(res.data.list || [])
       }
     } catch (e) { }
+  }
+
+  const saveProfile = async (e) => {
+    e.preventDefault()
+    try {
+      await api.put('/api/auth/profile', {
+        name: editData.name,
+        email: editData.email,
+        location: { lat: Number(editData.lat), lng: Number(editData.lng) }
+      }, { headers: { Authorization: 'Bearer ' + getToken() } })
+      showAlert('Success', 'Profile updated successfully!')
+      setIsEditing(false)
+      loadProfile()
+    } catch (e) {
+      showAlert('Error', e.response?.data?.message || 'Failed to update profile')
+    }
   }
 
   const accept = async (requestId, foodId) => {
@@ -152,10 +181,17 @@ export default function Profile() {
                     {userData.location.lat?.toFixed(4)}, {userData.location.lng?.toFixed(4)}
                   </span>
                 )}
-                <span className="flex items-center gap-2">
-                  <IconShield s="w-4 h-4" /> Account Verified
-                </span>
               </div>
+            </div>
+
+            {/* Edit Trigger */}
+            <div className="md:self-start">
+               <button 
+                 onClick={() => setIsEditing(!isEditing)}
+                 className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-md border border-white/20 transition-all flex items-center gap-2"
+               >
+                 {isEditing ? '🔌 Cancel' : '⚙️ Edit Profile'}
+               </button>
             </div>
           </div>
         </div>
@@ -180,6 +216,79 @@ export default function Profile() {
 
       {/* ══════════════════════════ MAIN CONTENT ══════════════════════════ */}
       <div className="max-w-7xl mx-auto px-6 md:px-10 pb-24">
+
+        {/* ── EDIT PROFILE SECTION ── */}
+        {isEditing && (
+          <div className="mb-12 animate-fadeIn">
+            <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-xl border border-slate-100 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16" />
+               <div className="relative">
+                 <h2 className="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
+                   <span className="bg-emerald-100 p-2 rounded-xl text-xl">📝</span> Update Account Details
+                 </h2>
+                 <form onSubmit={saveProfile} className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Full Name / Organization</label>
+                        <input className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} required />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Email Address (Contact)</label>
+                        <input type="email" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} required />
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Latitude</label>
+                          <input type="number" step="any" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.lat} onChange={e => setEditData({...editData, lat: e.target.value})} required />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Longitude</label>
+                          <input type="number" step="any" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.lng} onChange={e => setEditData({...editData, lng: e.target.value})} required />
+                        </div>
+                      </div>
+                      <div className="pt-4 flex gap-4">
+                         <button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-emerald-100 transition-all active:scale-95">
+                           🚀 Save Changes
+                         </button>
+                         <button type="button" onClick={() => setIsEditing(false)} className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm transition-all">
+                           Back
+                         </button>
+                      </div>
+                    </div>
+                 </form>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── VERIFICATION DOCUMENTS ── */}
+        <div className="mb-12">
+           <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-violet-700 font-bold">📄</div>
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900">Verification Documents</h2>
+                <p className="text-slate-400 text-sm">Legal identifications uploaded during registration</p>
+              </div>
+           </div>
+           
+           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {userData?.legalDocumentImages?.map((url, i) => (
+                <div key={i} className="group relative bg-white p-2 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden aspect-square">
+                   <img src={url} alt={`Doc ${i+1}`} className="w-full h-full object-cover rounded-xl grayscale group-hover:grayscale-0 transition-all" />
+                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <a href={url} target="_blank" rel="noreferrer" className="bg-white text-slate-900 p-2 rounded-lg text-xs font-black uppercase">View</a>
+                   </div>
+                </div>
+              ))}
+              {(!userData?.legalDocumentImages || userData.legalDocumentImages.length === 0) && (
+                <div className="col-span-full py-10 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 font-bold">
+                  No documents uploaded
+                </div>
+              )}
+           </div>
+        </div>
 
         {/* ── PROVIDER: grouped request cards ── */}
         {isProvider && (
