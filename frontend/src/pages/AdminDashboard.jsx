@@ -101,9 +101,9 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'pending', label: `⏳ Pending (${stats.pendingVerification || 0})` },
     { id: 'users', label: '👥 All Users' },
-    // { id: 'foods', label: '🍱 Foods' },
-    // { id: 'proofs', label: '📸 Distribution Proofs' },
-    // { id: 'stats', label: '📊 Stats' },
+    { id: 'foods', label: '🍱 Foods' },
+    { id: 'proofs', label: '📸 Distribution Proofs' },
+    { id: 'stats', label: '📊 Stats' },
   ]
 
   return (
@@ -115,17 +115,17 @@ export default function AdminDashboard() {
         <p className="text-slate-500 font-medium text-lg">Platform-wide management and verification portal.</p>
       </div>
 
-      {/* Quick stats */}
+      {/* Quick stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-4 mb-10">
         {[
           { value: stats.pendingVerification, label: 'Pending Verify', bg: 'bg-rose-50', ring: 'ring-rose-200/50', text: 'text-rose-600', sub: 'text-rose-400' },
           { value: stats.activeProviders, label: 'Providers', bg: 'bg-emerald-50', ring: 'ring-emerald-200/50', text: 'text-emerald-600', sub: 'text-emerald-400' },
           { value: stats.activeNGOs, label: 'Active NGOs', bg: 'bg-indigo-50', ring: 'ring-indigo-200/50', text: 'text-indigo-600', sub: 'text-indigo-400' },
-          // { value: stats.totalFood, label: 'Total Posts', bg: 'bg-slate-50', ring: 'ring-slate-200/50', text: 'text-slate-800', sub: 'text-slate-400' },
-          // { value: stats.totalCollected, label: 'Food Collected', bg: 'bg-amber-50', ring: 'ring-amber-200/50', text: 'text-amber-600', sub: 'text-amber-400', span: true },
+          { value: stats.totalFood, label: 'Total Posts', bg: 'bg-slate-50', ring: 'ring-slate-200/50', text: 'text-slate-800', sub: 'text-slate-400' },
+          { value: stats.totalCollected, label: 'Rescue Goal', bg: 'bg-amber-50', ring: 'ring-amber-200/50', text: 'text-amber-600', sub: 'text-amber-400' },
         ].map(s => (
-          <div key={s.label} className={`${s.bg} ring-1 ${s.ring} rounded-2xl border border-slate-100 p-5 ${s.span ? 'col-span-2 lg:col-span-1' : ''}`}>
-            <div className={`text-3xl font-black ${s.text} mb-1`}>{s.value || 0}</div>
+          <div key={s.label} className={`${s.bg} ring-1 ${s.ring} rounded-2xl border border-slate-100 p-5 shadow-sm`}>
+            <div className={`text-3xl font-black ${s.text} mb-1 tracking-tighter`}>{s.value || 0}</div>
             <div className={`text-[10px] font-black uppercase tracking-widest ${s.sub}`}>{s.label}</div>
           </div>
         ))}
@@ -138,8 +138,8 @@ export default function AdminDashboard() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-1 min-w-max px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wide transition-all whitespace-nowrap ${tab === t.id
-                ? 'bg-emerald-600 text-white shadow-sm'
+              className={`flex-1 min-w-max px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all whitespace-nowrap ${tab === t.id
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100'
                 : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
                 }`}
             >
@@ -155,69 +155,68 @@ export default function AdminDashboard() {
        {tab === 'pending' && (
           <div className="max-w-5xl mx-auto">
             {pendingUsers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-3xl py-20 bg-white ring-1 ring-slate-100 shadow-sm text-center">
-                <span className="text-6xl mb-4 block">✨</span>
-                <p className="text-slate-400 font-bold">No pending verifications</p>
+              <div className="flex flex-col items-center justify-center rounded-[3rem] py-24 bg-white ring-1 ring-slate-100 shadow-sm text-center">
+                <span className="text-7xl mb-6 block">✨</span>
+                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No pending verifications</p>
+                <p className="text-slate-300 text-sm mt-2">All users have been processed.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {pendingUsers.map(u => (
-                  <div key={u._id} className="bg-white rounded-3xl ring-1 ring-slate-200 shadow-lg overflow-hidden">
-                    <div className="p-6 md:p-8">
-                      <div className="flex justify-between items-start gap-4 mb-6">
+                  <div key={u._id} className="bg-white rounded-[2.5rem] ring-1 ring-slate-200 shadow-xl overflow-hidden border border-white">
+                    <div className="p-8 md:p-10">
+                      <div className="flex justify-between items-start gap-4 mb-8">
                         <div>
-                          <h4 className="text-xl font-black text-slate-800 tracking-tight">{u.name}</h4>
-                          <p className="text-slate-400 text-sm font-medium">{u.email}</p>
+                          <h4 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">{u.name}</h4>
+                          <p className="text-slate-400 text-sm font-bold truncate max-w-[200px]">{u.email}</p>
                         </div>
-                        <div className="text-[10px] bg-slate-100 px-2 py-1 rounded-full font-black text-slate-400 uppercase tracking-widest">
-                          {new Date(u.createdAt).toLocaleDateString()}
+                        <div className="text-[9px] bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl font-black text-slate-400 uppercase tracking-widest shadow-inner shrink-0">
+                          {new Date(u.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                         </div>
                       </div>
 
-                      <div className="flex gap-2 mb-8">
+                      <div className="flex gap-2 mb-10">
                         {roleBadge(u.role)}
                         {statusBadge(u.verificationStatus)}
                       </div>
 
                       {u.legalDocumentImages?.length > 0 && (
-                        <div className="mb-8">
-                          {/* Thumbnail strip — first 3 pages as preview */}
-                          <div className="flex gap-2 mb-3">
+                        <div className="mb-10">
+                          <div className="flex gap-3 mb-4">
                             {u.legalDocumentImages.slice(0, 3).map((url, i) => (
-                              <div key={i} className="relative w-16 aspect-[3/4] rounded-lg overflow-hidden ring-1 ring-slate-200 bg-slate-100 flex-shrink-0">
+                              <div key={i} className="relative w-20 aspect-[3/4] rounded-2xl overflow-hidden ring-1 ring-slate-200 bg-slate-100 flex-shrink-0 shadow-sm transition-transform hover:scale-105 cursor-zoom-in" onClick={() => openDocViewer(u)}>
                                 <img src={url} alt={`p${i + 1}`} className="w-full h-full object-cover" />
-                                <span className="absolute bottom-0.5 left-0.5 text-[8px] font-black bg-black/50 text-white px-1 rounded">{i + 1}</span>
+                                <span className="absolute bottom-1 right-1 text-[8px] font-black bg-black/50 text-white px-2 py-0.5 rounded-lg backdrop-blur-sm">{i + 1}</span>
                               </div>
                             ))}
                             {u.legalDocumentImages.length > 3 && (
-                              <div className="w-16 aspect-[3/4] rounded-lg ring-1 ring-slate-200 bg-slate-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-xs font-black text-slate-400">+{u.legalDocumentImages.length - 3}</span>
+                              <div className="w-20 aspect-[3/4] rounded-2xl ring-1 ring-slate-100 bg-slate-50 flex items-center justify-center flex-shrink-0 text-slate-400 font-black">
+                                +{u.legalDocumentImages.length - 3}
                               </div>
                             )}
                           </div>
-                          {/* Open full viewer */}
                           <button
                             type="button"
                             onClick={() => openDocViewer(u)}
-                            className="w-full py-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full py-4 rounded-2xl border-2 border-dashed border-slate-200 bg-white hover:bg-slate-50 text-slate-500 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
                           >
-                            📄 View All {u.legalDocumentImages.length} Page{u.legalDocumentImages.length > 1 ? 's' : ''}
+                            🔍 Open Legal Document Reader
                           </button>
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-50">
+                      <div className="grid grid-cols-2 gap-4 pt-8 border-t border-slate-50">
                         <button
                           onClick={() => verifyUser(u._id, 'approve')}
-                          className="py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl transition-all"
+                          className="py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-100"
                         >
-                          Approve Account
+                          Verify User
                         </button>
                         <button
                           onClick={() => verifyUser(u._id, 'reject')}
-                          className="py-3 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-600 font-black text-xs rounded-2xl border border-rose-100 transition-all"
+                          className="py-4 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-600 font-black text-[10px] uppercase tracking-widest rounded-2xl border border-rose-100 transition-all"
                         >
-                          Reject
+                          Reject Request
                         </button>
                       </div>
                     </div>
@@ -230,30 +229,37 @@ export default function AdminDashboard() {
 
         {/* ── ALL USERS ── */}
         {tab === 'users' && (
-          <div className="bg-white ring-1 ring-slate-100 rounded-3xl overflow-hidden shadow-sm">
+          <div className="bg-white ring-1 ring-slate-100 rounded-[2rem] overflow-hidden shadow-xl border border-white">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr>
-                    <th className={thClass}>User Identity</th>
-                    <th className={thClass}>Role</th>
-                    <th className={thClass}>Verification</th>
-                    <th className={thClass}>Status</th>
-                    <th className={thClass}>Management</th>
+                    <th className={thClass}>User Profile</th>
+                    <th className={thClass}>Platform Role</th>
+                    <th className={thClass}>Verify Status</th>
+                    <th className={thClass}>Safety Status</th>
+                    <th className={thClass}>Control Panel</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {allUsers.map(u => (
-                    <tr key={u._id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={u._id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className={tdClass}>
-                        <div className="font-bold text-slate-800">{u.name}</div>
-                        <div className="text-xs text-slate-400 font-medium">{u.email}</div>
+                        <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg shadow-inner ring-1 ring-slate-200">
+                              {u.role === 'ngo' ? '🏢' : u.role === 'provider' ? '🏪' : '🛡️'}
+                           </div>
+                           <div>
+                              <div className="font-black text-slate-800 leading-none mb-1">{u.name}</div>
+                              <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{u.email}</div>
+                           </div>
+                        </div>
                       </td>
                       <td className={tdClass}>{roleBadge(u.role)}</td>
                       <td className={tdClass}>{statusBadge(u.verificationStatus)}</td>
                       <td className={tdClass}>
                         <Badge color={u.isActive ? 'green' : 'red'}>
-                          {u.isActive ? 'ACTIVE' : 'BLOCKED'}
+                          {u.isActive ? 'OPERATIONAL' : 'SUSPENDED'}
                         </Badge>
                       </td>
                       <td className={tdClass}>
@@ -261,16 +267,16 @@ export default function AdminDashboard() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => toggleBlock(u._id)}
-                              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${u.isActive
-                                ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100'
-                                : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
+                              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all active:scale-95 ${u.isActive
+                                ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100 shadow-sm'
+                                : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100 shadow-sm'
                                 }`}
                             >
-                              {u.isActive ? 'Block' : 'Unblock'}
+                              {u.isActive ? 'Restrict' : 'Activate'}
                             </button>
                             <button
                               onClick={() => delUser(u._id)}
-                              className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 transition-all active:scale-95"
+                              className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 transition-all active:scale-95 shadow-sm"
                             >
                               Delete
                             </button>
@@ -286,26 +292,79 @@ export default function AdminDashboard() {
         )}
 
         {/* ── FOODS ── */}
-        {/* rahat will work here -------later task */}
+        {tab === 'foods' && (
+          <div className="bg-white ring-1 ring-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl border border-white">
+             <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                   <thead>
+                      <tr>
+                         <th className={thClass}>Food Detail</th>
+                         <th className={thClass}>Provider</th>
+                         <th className={thClass}>Quantity</th>
+                         <th className={thClass}>Status</th>
+                         <th className={thClass}>Action</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-50">
+                      {foods.map(f => (
+                         <tr key={f._id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className={tdClass}>
+                               <div className="font-black text-slate-800">{f.foodName}</div>
+                               <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Added {new Date(f.createdAt).toLocaleDateString()}</div>
+                            </td>
+                            <td className={tdClass}>
+                               <div className="flex items-center gap-2">
+                                  <span className="text-sm">🏪</span>
+                                  <span className="font-bold text-slate-600">{f.providerId?.name || 'Local Store'}</span>
+                               </div>
+                            </td>
+                            <td className={tdClass}>
+                               <span className="font-black text-slate-800">📦 {f.quantity} Items</span>
+                            </td>
+                            <td className={tdClass}>
+                               <Badge color={f.isExpired ? 'red' : 'green'}>
+                                  {f.isExpired ? 'EXPIRED' : 'ACTIVE'}
+                               </Badge>
+                            </td>
+                            <td className={tdClass}>
+                               <button 
+                                 onClick={() => delFood(f._id)}
+                                 className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 transition-all active:scale-95 shadow-sm"
+                               >
+                                  Remove listing
+                               </button>
+                            </td>
+                         </tr>
+                      ))}
+                   </tbody>
+                </table>
+             </div>
+             {foods.length === 0 && (
+                <div className="py-24 text-center">
+                   <span className="text-6xl mb-4 block">🍜</span>
+                   <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No food records found</p>
+                </div>
+             )}
+          </div>
+        )}
 
         {/* ── DISTRIBUTION PROOFS ── */}
-        {/* rahat will work here -------later task */}
-
+        
 
         {/* ── STATS ── */}
-       {/* rahat will work here -------later task */}
+        
 
       </div>
 
       {/* ── Single image preview (for proof images) ── */}
       {selectedDoc && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 animate-scaleIn"
           onClick={() => setSelectedDoc(null)}
         >
-          <div className="relative max-w-4xl w-full rounded-3xl overflow-hidden ring-1 ring-white/20 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <button className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 text-lg font-bold transition-all border-none cursor-pointer" onClick={() => setSelectedDoc(null)}>✕</button>
-            <img src={selectedDoc} alt="preview" className="w-full h-auto max-h-[90vh] object-contain" />
+          <div className="relative max-w-5xl w-full rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ring-white/10" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-6 right-6 z-10 w-12 h-12 flex items-center justify-center rounded-2xl bg-black/40 backdrop-blur text-white hover:bg-black/60 text-xl font-bold transition-all border-none cursor-pointer" onClick={() => setSelectedDoc(null)}>✕</button>
+            <img src={selectedDoc} alt="preview" className="w-full h-auto max-h-[90vh] object-contain shadow-2xl" />
           </div>
         </div>
       )}
