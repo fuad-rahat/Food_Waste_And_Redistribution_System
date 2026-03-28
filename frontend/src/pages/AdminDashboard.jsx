@@ -419,7 +419,46 @@ export default function AdminDashboard() {
         )}
 
         {/* ── STATS ── */}
-        
+        {tab === 'stats' && (
+           <div className="max-w-6xl mx-auto space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                 {[
+                   { icon: '📈', label: 'Total Postings', value: stats.totalFood, color: 'emerald' },
+                   { icon: '🏥', label: 'Rescued Items', value: stats.totalCollected, color: 'indigo' },
+                   { icon: '🕒', label: 'Items Expired', value: stats.totalExpired, color: 'rose' },
+                   { icon: '🌍', label: 'Active Providers', value: stats.activeProviders, color: 'amber' },
+                 ].map(s => (
+                    <div key={s.label} className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 flex flex-col items-center text-center">
+                       <span className="text-5xl mb-6 block drop-shadow-sm">{s.icon}</span>
+                       <h4 className="text-4xl font-black text-slate-800 tracking-tighter mb-2">{s.value || 0}</h4>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{s.label}</p>
+                    </div>
+                 ))}
+              </div>
+
+              <div className="bg-white rounded-[3rem] p-12 shadow-2xl border border-slate-100 relative overflow-hidden">
+                 <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500" />
+                 <div className="flex flex-col md:flex-row justify-between items-center gap-12">
+                    <div className="flex-1 text-center md:text-left">
+                       <h3 className="text-4xl font-black text-slate-900 tracking-tighter mb-4 leading-none uppercase">Platform Health Overview</h3>
+                       <p className="text-slate-500 font-bold text-lg leading-relaxed">
+                          Currently managing <span className="text-emerald-600 underline decoration-emerald-200 underline-offset-4">{stats.activeProviders + stats.activeNGOs} verified organizations</span> across the platform. 
+                          The rescue success rate is currently <span className="text-indigo-600">{((stats.totalCollected / (stats.totalFood || 1)) * 100).toFixed(1)}%</span>.
+                       </p>
+                    </div>
+                    <div className="w-56 h-56 rounded-full border-[12px] border-slate-50 flex items-center justify-center relative shadow-inner">
+                       <div className="text-center">
+                          <span className="text-4xl font-black text-slate-800 leading-none block">{((stats.totalCollected / (stats.totalFood || 1)) * 100).toFixed(0)}%</span>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Impact Score</span>
+                       </div>
+                       <svg className="absolute inset-0 w-full h-full -rotate-90">
+                          <circle cx="112" cy="112" r="94" fill="transparent" stroke="currentColor" strokeWidth="12" className="text-emerald-500" strokeDasharray={`${(stats.totalCollected / (stats.totalFood || 1)) * 590} 590`} strokeLinecap="round" />
+                       </svg>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        )}
 
       </div>
 
