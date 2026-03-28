@@ -349,7 +349,74 @@ export default function AdminDashboard() {
         )}
 
         {/* ── DISTRIBUTION PROOFS ── */}
-        
+        {tab === 'proofs' && (
+           <div className="max-w-6xl mx-auto space-y-8">
+              {proofs.length === 0 ? (
+                 <div className="py-32 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                    <span className="text-7xl mb-6 block">📸</span>
+                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">No proofs submitted yet</h3>
+                    <p className="text-slate-400 text-sm mt-2">Waiting for NGOs to complete food rescues.</p>
+                 </div>
+              ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {proofs.map(p => (
+                       <div key={p._id} className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden group">
+                          <div className="p-8">
+                             <div className="flex justify-between items-start gap-4 mb-8">
+                                <div>
+                                   <div className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Verified Distribution
+                                   </div>
+                                   <h4 className="text-2xl font-black text-slate-800 tracking-tighter leading-none mb-2">Rescue Log #{p._id.slice(-6).toUpperCase()}</h4>
+                                   <p className="text-slate-400 text-sm font-bold">Rescued by <span className="text-indigo-500 uppercase tracking-tight">{p.ngoId?.name}</span></p>
+                                </div>
+                                <div className="p-3 bg-slate-50 rounded-2xl ring-1 ring-slate-100 shadow-inner text-center">
+                                   <span className="text-[10px] font-black text-slate-400 block mb-0.5">SERVINGS</span>
+                                   <span className="text-lg font-black text-slate-800 leading-none">📦 {p.collectionId?.quantity || 0}</span>
+                                </div>
+                             </div>
+
+                             <div className="space-y-4 mb-8">
+                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                   <span className="text-lg">🍱</span>
+                                   <div>
+                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Food Item</p>
+                                      <p className="text-sm font-black text-slate-700 leading-none">{p.collectionId?.foodId?.foodName || 'Food Item'}</p>
+                                   </div>
+                                </div>
+                                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                   <span className="text-lg">🏪</span>
+                                   <div>
+                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Rescued From</p>
+                                      <p className="text-sm font-black text-slate-700 leading-none">{p.collectionId?.providerId?.name || 'Local Provider'}</p>
+                                   </div>
+                                </div>
+                             </div>
+
+                             <div className="mb-8">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Evidence of Distribution</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                   {p.proofPhotos?.map((url, i) => (
+                                      <div key={i} className="relative aspect-video rounded-2xl overflow-hidden ring-2 ring-slate-100 bg-slate-100 cursor-zoom-in group-hover:ring-emerald-200 transition-all shadow-sm" onClick={() => setSelectedDoc(url)}>
+                                         <img src={url} alt={`proof_${i}`} className="w-full h-full object-cover" />
+                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                            <span className="text-white text-xs font-black uppercase tracking-widest">Enlarge</span>
+                                         </div>
+                                      </div>
+                                   ))}
+                                </div>
+                             </div>
+
+                             <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest border-t border-slate-50 pt-6">
+                                Completed on {new Date(p.createdAt).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                             </div>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              )}
+           </div>
+        )}
 
         {/* ── STATS ── */}
         
