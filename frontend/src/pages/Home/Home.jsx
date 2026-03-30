@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useModal } from '../context/ModalContext'
+import { useModal } from '../../context/ModalContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import api from '../api'
-import { getToken, getUserFromToken } from '../utils/auth'
+import api from '../../api'
+import { getToken, getUserFromToken } from '../../utils/auth'
 
 const parseDMS = (coord) => {
   if (typeof coord === 'number') return coord;

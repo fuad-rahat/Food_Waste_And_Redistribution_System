@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import api from '../api'
-import { getToken } from '../utils/auth'
-import { useModal } from '../context/ModalContext'
-import ImageUploader from '../components/ImageUploader'
+import api from '../../api'
+import { getToken } from '../../utils/auth'
+import { useModal } from '../../context/ModalContext'
+import ImageUploader from '../../components/Uploaders/ImageUploader'
 
 const authHeaders = () => ({ headers: { Authorization: 'Bearer ' + getToken() } })
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import api from '../api'
-import { getToken, getUserFromToken } from '../utils/auth'
-import { useModal } from '../context/ModalContext'
+import api from '../../api'
+import { getToken, getUserFromToken } from '../../utils/auth'
+import { useModal } from '../../context/ModalContext'
 
 const IconSearch = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

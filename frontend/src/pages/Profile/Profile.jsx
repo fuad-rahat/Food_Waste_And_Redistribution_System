@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import api from '../api'
-import { getToken, getUserFromToken } from '../utils/auth'
-import { useModal } from '../context/ModalContext'
+import api from '../../api'
+import { getToken, getUserFromToken } from '../../utils/auth'
+import { useModal } from '../../context/ModalContext'
 
 /* ── SVG Icons ───────────────────────────────────────────────────────── */
 const Ico = ({ d, extra = '', size = 'w-5 h-5', vb = '0 0 24 24', sw = 2, children }) => (

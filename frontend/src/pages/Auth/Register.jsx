@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import api from '../api'
+import api from '../../api'
 import { useNavigate, Link } from 'react-router-dom'
-import DocumentUploader from '../components/DocumentUploader'
-import { useModal } from '../context/ModalContext'
+import DocumentUploader from '../../components/Uploaders/DocumentUploader'
+import { useModal } from '../../context/ModalContext'
 
 /* ── Tiny inline SVG icons ───────────────────────────────── */
 const IconPin = () => (

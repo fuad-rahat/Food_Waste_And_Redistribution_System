@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import api from '../api'
-import { saveToken } from '../utils/auth'
+import api from '../../api'
+import { saveToken } from '../../utils/auth'
 import { useNavigate, Link } from 'react-router-dom'
 
 export default function Login() {
