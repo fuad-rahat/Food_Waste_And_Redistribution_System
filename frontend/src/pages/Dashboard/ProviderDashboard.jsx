@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
 import { useModal } from '../../context/ModalContext'
@@ -241,7 +242,9 @@ export default function ProviderDashboard() {
                                     {req.ngoId?.name?.charAt(0) || 'N'}
                                   </div>
                                   <div>
-                                     <h5 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-1.5">{req.ngoId?.name || 'NGO Partner'}</h5>
+                                     <h5 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-1.5">
+                                       <Link to={"/profile/" + req.ngoId?._id} className="hover:text-indigo-600 transition-colors">{req.ngoId?.name || 'NGO Partner'}</Link>
+                                     </h5>
                                      <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                         {req.ngoId?.email}

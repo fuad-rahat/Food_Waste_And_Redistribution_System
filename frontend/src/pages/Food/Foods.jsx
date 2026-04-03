@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
 import { useModal } from '../../context/ModalContext'
@@ -168,7 +169,9 @@ export default function Foods() {
                      <div className="flex-1 pr-4 truncate">
                         <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest rounded-lg mb-2 inline-block">Verified Safe</span>
                         <h4 className="text-xl font-black text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors truncate">{f.foodName}</h4>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">🏪 {f.providerId?.name || 'Local Provider'}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                          🏪 <Link to={"/profile/" + f.providerId?._id} className="hover:text-emerald-600 transition-colors">{f.providerId?.name || 'Local Provider'}</Link>
+                        </p>
                      </div>
                      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${f.isExpired ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         {f.isExpired ? 'Expired' : 'Live'}

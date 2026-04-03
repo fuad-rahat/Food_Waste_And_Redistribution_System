@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../api'
 import { getToken } from '../../utils/auth'
 import { useModal } from '../../context/ModalContext'
@@ -215,7 +216,7 @@ export default function NGODashboard() {
                            </span>
                            <h4 className="text-xl font-black text-slate-800 tracking-tight leading-none truncate group-hover:text-emerald-600 transition-colors">{item.food.foodName}</h4>
                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2 flex items-center gap-1">
-                              🏪 {p?.name || 'Local Provider'}
+                              🏪 <Link to={"/profile/" + p?._id} className="hover:text-emerald-600 transition-colors">{p?.name || 'Local Provider'}</Link>
                            </p>
                         </div>
                         <div className="text-right">
@@ -287,7 +288,7 @@ export default function NGODashboard() {
                               {req.status}
                             </span>
                             <h4 className="text-xl font-black text-slate-800">{req.foodId?.foodName || 'Food Item'}</h4>
-                            <p className="text-slate-400 font-medium text-xs">Provider: <span className="font-bold">{req.providerId?.name || '—'}</span></p>
+                            <p className="text-slate-400 font-medium text-xs">Provider: <Link to={"/profile/" + req.providerId?._id} className="font-bold hover:text-sky-600 transition-colors">{req.providerId?.name || '—'}</Link></p>
                          </div>
                          <div className="text-right">
                             <span className="text-[10px] font-black text-slate-400 uppercase block mb-0.5">Requested</span>

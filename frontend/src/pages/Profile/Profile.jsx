@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
 import { useModal } from '../../context/ModalContext'
@@ -56,6 +57,7 @@ function StatCard({ label, value, Icon, accent }) {
 
 /* ── main component ──────────────────────────────────────────────────── */
 export default function Profile() {
+  const { id } = useParams()
   const { showAlert, showPrompt } = useModal()
   const [userData, setUserData] = useState(null)
   const [foods, setFoods] = useState([])
@@ -81,6 +83,14 @@ export default function Profile() {
   const loadProfile = async () => {
     try {
       const token = getToken()
+      if (id) {
+        // View another user's profile
+        const res = await api.get('/api/auth/profile/' + id, { headers: { Authorization: 'Bearer ' + token } })
+        if (res.data?.user) setUserData(res.data.user)
+        return
+      }
+
+      // View own profile
       const resUser = await api.get('/api/auth/me', { headers: { Authorization: 'Bearer ' + token } }).catch(() => null)
       if (resUser?.data?.user) setUserData(resUser.data.user)
       if (user.role === 'provider') {
@@ -133,11 +143,18 @@ export default function Profile() {
     } catch { showAlert('Error', 'Failed to reject.') }
   }
 
-  const isProvider = user?.role === 'provider'
+  const isViewOnly = !!id
+  const isProvider = isViewOnly ? userData?.role === 'provider' : user?.role === 'provider'
   const initials = (userData?.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
   const totalReq = isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.length, 0) : requests.length
   const acceptedCnt = isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'accepted').length, 0) : requests.filter(r => r.status === 'accepted').length
   const pendingCnt = isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'pending').length, 0) : requests.filter(r => r.status === 'pending').length
+
+  if (!userData) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="animate-pulse text-slate-400 font-bold uppercase tracking-widest text-sm">Loading Profile...</div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -186,12 +203,14 @@ export default function Profile() {
 
             {/* Edit Trigger */}
             <div className="md:self-start">
-               <button 
-                 onClick={() => setIsEditing(!isEditing)}
-                 className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-md border border-white/20 transition-all flex items-center gap-2"
-               >
-                 {isEditing ? '🔌 Cancel' : '⚙️ Edit Profile'}
-               </button>
+               {!isViewOnly && (
+                 <button 
+                   onClick={() => setIsEditing(!isEditing)}
+                   className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-md border border-white/20 transition-all flex items-center gap-2"
+                 >
+                   {isEditing ? '🔌 Cancel' : '⚙️ Edit Profile'}
+                 </button>
+               )}
             </div>
           </div>
         </div>
@@ -334,7 +353,7 @@ export default function Profile() {
                         <div key={r._id} className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-5 hover:bg-slate-50/60 transition-colors rounded-2xl">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                              <span className="font-bold text-slate-900">{r.ngoId?.name}</span>
+                              <Link to={"/profile/" + r.ngoId?._id} className="font-bold text-slate-900 hover:text-emerald-600 transition-colors">{r.ngoId?.name}</Link>
                               <StatusBadge status={r.status} />
                             </div>
                             <div className="flex gap-4 text-xs text-slate-500 font-medium">
@@ -404,7 +423,9 @@ export default function Profile() {
                       {requests.map((r, i) => (
                         <tr key={r._id} className={`border-b border-slate-50 hover:bg-emerald-50/30 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
                           <td className="py-5 px-7 font-bold text-slate-900">{r.foodId?.foodName || '—'}</td>
-                          <td className="py-5 px-7 text-slate-500 font-medium text-sm">{r.foodId?.provider?.name || '—'}</td>
+                          <td className="py-5 px-7 text-slate-500 font-medium text-sm">
+                            <Link to={"/profile/" + r.foodId?.provider?._id} className="hover:text-sky-600 transition-colors">{r.foodId?.provider?.name || '—'}</Link>
+                          </td>
                           <td className="py-5 px-7 font-semibold text-slate-700 text-sm">{r.requestedAmount} units</td>
                           <td className="py-5 px-7"><StatusBadge status={r.status} /></td>
                           <td className="py-5 px-7 font-extrabold text-emerald-600 text-sm">{r.grantedAmount || 0}</td>
@@ -418,6 +439,14 @@ export default function Profile() {
           </div>
         )}
 
+        {/* Hide history/requests for others */}
+        {isViewOnly && (
+           <div className="mt-12 bg-white rounded-3xl p-10 border border-slate-100 text-center shadow-sm">
+              <div className="text-4xl mb-4">ℹ️</div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Private Information</h3>
+              <p className="text-slate-500 max-w-sm mx-auto">Request history and detailed metrics are private to the account holder. Verified documents are shown above for transparency.</p>
+           </div>
+        )}
       </div>
     </div>
   )

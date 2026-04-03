@@ -111,7 +111,7 @@ function AppContent() {
           <Route path="/provider" element={<RoleRoute role="provider"><ProviderDashboard /></RoleRoute>} />
           <Route path="/ngo" element={<RoleRoute role="ngo"><NGODashboard /></RoleRoute>} />
           <Route path="/admin" element={<RoleRoute role="admin"><AdminDashboard /></RoleRoute>} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:id?" element={<Profile />} />
           <Route path="/foods" element={<Foods />} />
         </Routes>
       </main>
