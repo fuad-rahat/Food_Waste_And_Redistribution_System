@@ -104,11 +104,27 @@ router.post('/request/:foodId', auth, isNGO, isActiveUser, async (req, res) => {
 // GET /api/ngo/requests — NGO's own requests
 router.get('/requests', auth, isNGO, isActiveUser, async (req, res) => {
   try {
-    const list = await Request.find({ ngoId: req.user.id })
+    const { lat, lng } = req.query;
+    const userLat = lat ? parseFloat(lat) : null;
+    const userLng = lng ? parseFloat(lng) : null;
+
+    const rawList = await Request.find({ ngoId: req.user.id })
       .populate('foodId')
       .populate('providerId', 'name')
       .populate('collectionId')
       .sort({ createdAt: -1 });
+
+    const list = rawList.map(r => {
+      let distanceKm = null;
+      if (userLat && userLng) {
+        const foodLoc = r.foodId?.location;
+        if (foodLoc && foodLoc.lat != null) {
+          distanceKm = haversineDistance(userLat, userLng, foodLoc.lat, foodLoc.lng);
+        }
+      }
+      return { ...r.toObject(), distanceKm };
+    });
+
     res.json({ list });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

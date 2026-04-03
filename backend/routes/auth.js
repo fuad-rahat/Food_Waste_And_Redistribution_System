@@ -3,7 +3,11 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Request = require('../models/Request');
+const Collection = require('../models/Collection');
+const DistributionProof = require('../models/DistributionProof');
 const auth = require('../middleware/auth');
+const { haversineDistance } = require('../utils/geo');
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -121,9 +125,62 @@ router.put('/profile', auth, async (req, res) => {
 // GET /api/auth/profile/:id — fetch public profile data
 router.get('/profile/:id', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ user });
+    const targetUser = await User.findById(req.params.id).select('-password');
+    if (!targetUser) return res.status(404).json({ message: 'User not found' });
+
+    const isSelf = String(targetUser._id) === String(req.user.id);
+
+    // Privacy rule: Providers are private (only self).
+    if (targetUser.role === 'provider' && !isSelf) {
+      return res.status(403).json({ message: 'Provider profiles are private' });
+    }
+
+    // Privacy rule: NGO documents are hidden for public view
+    if (targetUser.role === 'ngo' && !isSelf) {
+      targetUser.legalDocumentImages = [];
+    }
+
+    // For NGOs, fetch public stats and activities
+    let stats = null;
+    let activities = [];
+    if (targetUser.role === 'ngo') {
+      const { lat, lng } = req.query;
+      const userLat = lat ? parseFloat(lat) : null;
+      const userLng = lng ? parseFloat(lng) : null;
+
+      const allReqs = await Request.find({ ngoId: targetUser._id });
+      stats = {
+        total: allReqs.length,
+        accepted: allReqs.filter(r => r.status === 'accepted').length,
+        pending: allReqs.filter(r => r.status === 'pending').length
+      };
+
+      // Completed pickups and their proofs
+      const collections = await Collection.find({ ngoId: targetUser._id, pickup_status: 'completed' })
+        .populate('foodId')
+        .sort({ collectedAt: -1 });
+      
+      const proofs = await DistributionProof.find({ ngoId: targetUser._id });
+
+      activities = collections.map(col => {
+        const proof = proofs.find(p => String(p.collectionId) === String(col._id));
+        let distanceKm = null;
+        if (userLat && userLng && col.foodId?.location) {
+          distanceKm = haversineDistance(userLat, userLng, col.foodId.location.lat, col.foodId.location.lng);
+        }
+        return {
+          collectionId: col._id,
+          foodName: col.foodId?.foodName || 'Food Item',
+          pickupDate: col.collectedAt,
+          proofImages: proof ? proof.proofImages : [],
+          description: proof ? proof.description : '',
+          hasProof: !!proof,
+          distanceKm
+        };
+      });
+    }
+
+    res.json({ user: targetUser, stats, activities });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

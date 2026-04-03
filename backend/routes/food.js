@@ -108,9 +108,10 @@ router.get('/available', async (req, res) => {
     }
 
     // 3. Proximity Filter (JS side for simplicity with population)
-    if (nearMe === 'true' && lat && lng) {
-      const userLat = parseFloat(lat);
-      const userLng = parseFloat(lng);
+    const userLat = lat ? parseFloat(lat) : null;
+    const userLng = lng ? parseFloat(lng) : null;
+
+    if (nearMe === 'true' && userLat && userLng) {
       foods = foods.filter(f => {
         const pLoc = f.providerId?.location || f.location;
         if (!pLoc || pLoc.lat == null) return false;
@@ -122,17 +123,27 @@ router.get('/available', async (req, res) => {
     const total = foods.length;
     const paginatedFoods = foods.slice(skip, skip + parseInt(limit));
 
-    const transformed = paginatedFoods.map(f => ({
-      _id: f._id,
-      foodName: f.foodName,
-      quantity: f.quantity,
-      expiryTime: f.expiryTime,
-      location: f.location,
-      details: f.details,
-      status: f.status,
-      providerId: f.providerId,
-      isExpired: f.expiryTime && (new Date(f.expiryTime) < now)
-    }));
+    const transformed = paginatedFoods.map(f => {
+      let distanceKm = null;
+      if (userLat && userLng) {
+        const pLoc = f.providerId?.location || f.location;
+        if (pLoc && pLoc.lat != null) {
+          distanceKm = haversineDistance(userLat, userLng, pLoc.lat, pLoc.lng);
+        }
+      }
+      return {
+        _id: f._id,
+        foodName: f.foodName,
+        quantity: f.quantity,
+        expiryTime: f.expiryTime,
+        location: f.location,
+        details: f.details,
+        status: f.status,
+        providerId: f.providerId,
+        isExpired: f.expiryTime && (new Date(f.expiryTime) < now),
+        distanceKm
+      };
+    });
 
     res.json({
       foods: transformed,

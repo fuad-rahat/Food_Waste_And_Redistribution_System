@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
 import { useModal } from '../../context/ModalContext'
@@ -57,10 +57,15 @@ function StatCard({ label, value, Icon, accent }) {
 
 /* ── main component ──────────────────────────────────────────────────── */
 export default function Profile() {
+  const navigate = useNavigate()
   const { id } = useParams()
   const { showAlert, showPrompt } = useModal()
   const [userData, setUserData] = useState(null)
+  const [publicStats, setPublicStats] = useState(null)
+  const [activities, setActivities] = useState([])
   const [foods, setFoods] = useState([])
+  const [lat, setLat] = useState(null)
+  const [lng, setLng] = useState(null)
   const [groupedRequests, setGrouped] = useState({})
   const [requests, setRequests] = useState([])
   const [isEditing, setIsEditing] = useState(false)
@@ -78,15 +83,40 @@ export default function Profile() {
     }
   }, [userData])
 
-  useEffect(() => { if (user) loadProfile() }, [])
+  useEffect(() => { 
+    if (user && user.role === 'ngo' && !lat) {
+       navigator.geolocation.getCurrentPosition(
+         pos => {
+           const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+           setLat(c.lat); setLng(c.lng);
+           loadProfile(c);
+         },
+         () => loadProfile()
+       );
+    } else if (user) {
+       loadProfile() 
+    }
+  }, [id])
 
-  const loadProfile = async () => {
+  const loadProfile = async (coords = null) => {
     try {
       const token = getToken()
+      const uLat = coords?.lat || lat;
+      const uLng = coords?.lng || lng;
+      const query = uLat && uLng ? `?lat=${uLat}&lng=${uLng}` : '';
       if (id) {
         // View another user's profile
-        const res = await api.get('/api/auth/profile/' + id, { headers: { Authorization: 'Bearer ' + token } })
-        if (res.data?.user) setUserData(res.data.user)
+        try {
+          const res = await api.get('/api/auth/profile/' + id + query, { headers: { Authorization: 'Bearer ' + token } })
+          if (res.data?.user) {
+            setUserData(res.data.user)
+            if (res.data.stats) setPublicStats(res.data.stats)
+            if (res.data.activities) setActivities(res.data.activities)
+          }
+        } catch (e) {
+          showAlert('Private Account', e.response?.data?.message || 'Access denied.')
+          navigate('/')
+        }
         return
       }
 
@@ -146,9 +176,9 @@ export default function Profile() {
   const isViewOnly = !!id
   const isProvider = isViewOnly ? userData?.role === 'provider' : user?.role === 'provider'
   const initials = (userData?.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-  const totalReq = isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.length, 0) : requests.length
-  const acceptedCnt = isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'accepted').length, 0) : requests.filter(r => r.status === 'accepted').length
-  const pendingCnt = isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'pending').length, 0) : requests.filter(r => r.status === 'pending').length
+  const totalReq = isViewOnly ? (publicStats?.total || 0) : (isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.length, 0) : requests.length)
+  const acceptedCnt = isViewOnly ? (publicStats?.accepted || 0) : (isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'accepted').length, 0) : requests.filter(r => r.status === 'accepted').length)
+  const pendingCnt = isViewOnly ? (publicStats?.pending || 0) : (isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'pending').length, 0) : requests.filter(r => r.status === 'pending').length)
 
   if (!userData) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -282,31 +312,86 @@ export default function Profile() {
           </div>
         )}
 
-        {/* ── VERIFICATION DOCUMENTS ── */}
+        {/* ── IMPACT GALLERY OR VERIFICATION DOCUMENTS ── */}
         <div className="mb-12">
            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-violet-700 font-bold">📄</div>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${isViewOnly && !isProvider ? 'bg-indigo-100 text-indigo-700' : 'bg-violet-100 text-violet-700'}`}>
+                {isViewOnly && !isProvider ? '🎨' : '📄'}
+              </div>
               <div>
-                <h2 className="text-xl font-extrabold text-slate-900">Verification Documents</h2>
-                <p className="text-slate-400 text-sm">Legal identifications uploaded during registration</p>
+                <h2 className="text-xl font-extrabold text-slate-900">
+                  {isViewOnly && !isProvider ? 'Impact Gallery & Recent Activity' : 'Verification Documents'}
+                </h2>
+                <p className="text-slate-400 text-sm">
+                  {isViewOnly && !isProvider ? 'Documented food distributions and community impact' : 'Legal identifications uploaded during registration'}
+                </p>
               </div>
            </div>
            
-           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {userData?.legalDocumentImages?.map((url, i) => (
-                <div key={i} className="group relative bg-white p-2 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden aspect-square">
-                   <img src={url} alt={`Doc ${i+1}`} className="w-full h-full object-cover rounded-xl grayscale group-hover:grayscale-0 transition-all" />
-                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <a href={url} target="_blank" rel="noreferrer" className="bg-white text-slate-900 p-2 rounded-lg text-xs font-black uppercase">View</a>
-                   </div>
-                </div>
-              ))}
-              {(!userData?.legalDocumentImages || userData.legalDocumentImages.length === 0) && (
-                <div className="col-span-full py-10 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 font-bold">
-                  No documents uploaded
-                </div>
-              )}
-           </div>
+           {/* If viewing public NGO profile, show activities */}
+           {isViewOnly && !isProvider ? (
+             <div className="space-y-6">
+               {activities.length === 0 ? (
+                 <div className="py-20 bg-white border border-dashed border-slate-200 rounded-[32px] text-center">
+                    <span className="text-5xl mb-4 block">🚚</span>
+                    <p className="text-slate-400 font-bold">No orders picked up yet</p>
+                    <p className="text-slate-300 text-sm">This NGO hasn't completed any food collections yet.</p>
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   {activities.map((act, i) => (
+                     <div key={i} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-all">
+                        {act.hasProof ? (
+                          <div className="aspect-video relative overflow-hidden bg-slate-100">
+                             <img src={act.proofImages[0]} alt="Impact" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                             <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg shadow-lg">Verified Impact</div>
+                          </div>
+                        ) : (
+                          <div className="aspect-video flex flex-col items-center justify-center bg-slate-50 border-b border-slate-100 text-slate-400 p-6 text-center">
+                             <span className="text-3xl mb-2">📸</span>
+                             <p className="text-[10px] font-black uppercase tracking-widest leading-tight">Proof of distribution pending</p>
+                             <p className="text-[9px] mt-1 opacity-70">Distribution documentation is required for every pickup.</p>
+                          </div>
+                        )}
+                        <div className="p-5 flex-1 flex flex-col">
+                           <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-extrabold text-slate-800 leading-tight">{act.foodName}</h4>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(act.pickupDate).toLocaleDateString()}</span>
+                           </div>
+                           {act.description && <p className="text-xs text-slate-500 line-clamp-2 italic mb-3">"{act.description}"</p>}
+                           <div className="mt-auto pt-3 border-t border-slate-50 flex items-center justify-between">
+                              <span className={`text-[9px] font-black uppercase tracking-widest ${act.hasProof ? 'text-emerald-600' : 'text-amber-500'}`}>
+                                {act.hasProof ? '✅ Documentation Complete' : '⏳ Pending Evidence'}
+                                {act.distanceKm != null && ` (${act.distanceKm.toFixed(1)} km)`}
+                              </span>
+                              {act.hasProof && act.proofImages.length > 1 && (
+                                <span className="text-[9px] font-bold text-slate-300">+{act.proofImages.length - 1} more photos</span>
+                              )}
+                           </div>
+                        </div>
+                     </div>
+                   ))}
+                 </div>
+               )}
+             </div>
+           ) : (
+             /* Otherwise show verification documents (self view or provider) */
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {userData?.legalDocumentImages?.map((url, i) => (
+                  <div key={i} className="group relative bg-white p-2 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden aspect-square">
+                     <img src={url} alt={`Doc ${i+1}`} className="w-full h-full object-cover rounded-xl grayscale group-hover:grayscale-0 transition-all" />
+                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <a href={url} target="_blank" rel="noreferrer" className="bg-white text-slate-900 p-2 rounded-lg text-xs font-black uppercase">View</a>
+                     </div>
+                  </div>
+                ))}
+                {(!userData?.legalDocumentImages || userData.legalDocumentImages.length === 0) && (
+                  <div className="col-span-full py-10 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 font-bold">
+                    No documents uploaded
+                  </div>
+                )}
+             </div>
+           )}
         </div>
 
         {/* ── PROVIDER: grouped request cards ── */}
@@ -423,9 +508,7 @@ export default function Profile() {
                       {requests.map((r, i) => (
                         <tr key={r._id} className={`border-b border-slate-50 hover:bg-emerald-50/30 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
                           <td className="py-5 px-7 font-bold text-slate-900">{r.foodId?.foodName || '—'}</td>
-                          <td className="py-5 px-7 text-slate-500 font-medium text-sm">
-                            <Link to={"/profile/" + r.foodId?.provider?._id} className="hover:text-sky-600 transition-colors">{r.foodId?.provider?.name || '—'}</Link>
-                          </td>
+                          <td className="py-5 px-7 text-slate-500 font-medium text-sm">{r.foodId?.provider?.name || '—'}</td>
                           <td className="py-5 px-7 font-semibold text-slate-700 text-sm">{r.requestedAmount} units</td>
                           <td className="py-5 px-7"><StatusBadge status={r.status} /></td>
                           <td className="py-5 px-7 font-extrabold text-emerald-600 text-sm">{r.grantedAmount || 0}</td>
@@ -439,12 +522,12 @@ export default function Profile() {
           </div>
         )}
 
-        {/* Hide history/requests for others */}
+        {/* Hide history/requests table for others */}
         {isViewOnly && (
            <div className="mt-12 bg-white rounded-3xl p-10 border border-slate-100 text-center shadow-sm">
               <div className="text-4xl mb-4">ℹ️</div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Private Information</h3>
-              <p className="text-slate-500 max-w-sm mx-auto">Request history and detailed metrics are private to the account holder. Verified documents are shown above for transparency.</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Request History Private</h3>
+              <p className="text-slate-500 max-w-sm mx-auto">Specific request histories and distribution details are private. Summary stats and verified documents are shown for NGO accountability.</p>
            </div>
         )}
       </div>

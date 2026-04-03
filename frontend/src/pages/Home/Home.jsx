@@ -234,9 +234,18 @@ export default function Home() {
   useEffect(() => {
     fetchFoods();
     fetchMyRequests();
-  }, [page, nearMe])
+  }, [page, nearMe, userLoc])
 
   useEffect(() => {
+    const user = getUserFromToken();
+    if (user && user.role === 'ngo' && !userLoc) {
+       api.get('/api/auth/profile/' + user.id, { headers: { Authorization: 'Bearer ' + getToken() } })
+         .then(res => {
+           const loc = res.data?.user?.location;
+           if (loc && loc.lat !== 0) setUserLoc({ lat: loc.lat, lng: loc.lng });
+         }).catch(() => {});
+    }
+
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -564,7 +573,17 @@ export default function Home() {
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1 min-w-0 pr-4">
                           <h4 className="text-lg font-black text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1">{f.foodName}</h4>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 truncate">🏪 {f.providerId?.name || 'Local Provider'}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest truncate">🏪 {f.providerId?.name || 'Local Provider'}</p>
+                            {f.distanceKm != null && (
+                              <div className="flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100/50">
+                                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[9px] text-emerald-600 font-black uppercase tracking-tight">
+                                  {f.distanceKm.toFixed(1)} km
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${f.isExpired ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
                           {f.isExpired ? 'Expired' : 'Live'}

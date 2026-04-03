@@ -35,7 +35,10 @@ export default function NGODashboard() {
   }, [])
 
   useEffect(() => {
-    if (lat && lng) fetchNearby()
+    if (lat && lng) {
+      fetchNearby()
+      fetchMyRequests()
+    }
   }, [lat, lng])
 
   const getLocation = () => {
@@ -57,7 +60,8 @@ export default function NGODashboard() {
 
   const fetchMyRequests = async () => {
     try {
-      const res = await api.get('/api/ngo/requests', authHeaders())
+      const url = `/api/ngo/requests${lat && lng ? `?lat=${lat}&lng=${lng}` : ''}`
+      const res = await api.get(url, authHeaders())
       setMyRequests(res.data.list || [])
     } catch (e) { }
   }
@@ -216,7 +220,7 @@ export default function NGODashboard() {
                            </span>
                            <h4 className="text-xl font-black text-slate-800 tracking-tight leading-none truncate group-hover:text-emerald-600 transition-colors">{item.food.foodName}</h4>
                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2 flex items-center gap-1">
-                              🏪 <Link to={"/profile/" + p?._id} className="hover:text-emerald-600 transition-colors">{p?.name || 'Local Provider'}</Link>
+                              🏪 {p?.name || 'Local Provider'}
                            </p>
                         </div>
                         <div className="text-right">
@@ -288,7 +292,15 @@ export default function NGODashboard() {
                               {req.status}
                             </span>
                             <h4 className="text-xl font-black text-slate-800">{req.foodId?.foodName || 'Food Item'}</h4>
-                            <p className="text-slate-400 font-medium text-xs">Provider: <Link to={"/profile/" + req.providerId?._id} className="font-bold hover:text-sky-600 transition-colors">{req.providerId?.name || '—'}</Link></p>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                               <p className="text-slate-400 font-medium text-xs">Provider: <span className="font-bold">{req.providerId?.name || '—'}</span></p>
+                               {req.distanceKm != null && (
+                                 <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100/50 flex items-center gap-1">
+                                   <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                                   {req.distanceKm.toFixed(1)} km
+                                 </p>
+                               )}
+                            </div>
                          </div>
                          <div className="text-right">
                             <span className="text-[10px] font-black text-slate-400 uppercase block mb-0.5">Requested</span>
