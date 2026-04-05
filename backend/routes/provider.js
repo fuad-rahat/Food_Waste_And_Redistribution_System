@@ -5,6 +5,7 @@ const { isProvider, isActiveUser } = require('../middleware/roles');
 const Request = require('../models/Request');
 const Food = require('../models/Food');
 const Collection = require('../models/Collection');
+const Notification = require('../models/Notification');
 
 // GET /api/provider/requests — view requests grouped by food
 router.get('/requests', auth, isProvider, isActiveUser, async (req, res) => {
@@ -59,9 +60,28 @@ router.put('/request/:id/accept', auth, isProvider, isActiveUser, async (req, re
       if (food.quantity === 0) food.status = 'claimed';
       await food.save();
       if (food.quantity === 0) {
+        const others = await Request.find({ foodId: food._id, status: 'pending' });
         await Request.updateMany({ foodId: food._id, status: 'pending' }, { status: 'rejected' });
+        // Notify others
+        if (others.length > 0) {
+          const bulkNotifs = others.map(r => ({
+            recipient: r.ngoId,
+            type: 'request_update',
+            message: `Request for ${food.foodName} was rejected (already claimed by another NGO).`,
+            foodId: food._id
+          }));
+          await Notification.insertMany(bulkNotifs);
+        }
       }
     }
+
+    // Notify the accepted NGO
+    await new Notification({
+      recipient: reqDoc.ngoId,
+      type: 'request_update',
+      message: `Your request for ${food?.foodName || 'food'} was accepted!`,
+      foodId: reqDoc.foodId
+    }).save();
     res.json({ message: 'Accepted', request: reqDoc, food });
   } catch (err) {
     console.error(err);
@@ -77,6 +97,14 @@ router.put('/request/:id/reject', auth, isProvider, isActiveUser, async (req, re
     if (String(reqDoc.providerId) !== req.user.id) return res.status(403).json({ message: 'Not allowed' });
     reqDoc.status = 'rejected';
     await reqDoc.save();
+
+    // Notify them
+    await new Notification({
+      recipient: reqDoc.ngoId,
+      type: 'request_update',
+      message: `Your request for food was rejected by the provider.`,
+      foodId: reqDoc.foodId
+    }).save();
     res.json({ message: 'Rejected', request: reqDoc });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

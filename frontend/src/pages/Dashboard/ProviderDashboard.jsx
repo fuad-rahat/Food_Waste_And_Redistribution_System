@@ -18,8 +18,19 @@ export default function ProviderDashboard() {
   const [tab, setTab] = useState('post')
   const [posting, setPosting] = useState(false)
   const [grantAmounts, setGrantAmounts] = useState({})
+  const [lat, setLat] = useState('')
+  const [lng, setLng] = useState('')
+  const [isDetecting, setIsDetecting] = useState(false)
 
-  useEffect(() => { fetchMyFoods(); fetchRequests() }, [])
+  useEffect(() => {
+    fetchMyFoods()
+    fetchRequests()
+    // Pre-fill location from provider's registered coordinates if available
+    if (user && user.location) {
+      setLat(user.location.lat ? String(user.location.lat) : '')
+      setLng(user.location.lat ? String(user.location.lng) : '')
+    }
+  }, [])
 
   const fetchMyFoods = async () => {
     try {
@@ -43,9 +54,9 @@ export default function ProviderDashboard() {
     try {
       await api.post('/api/food/create', {
         foodName, quantity: Number(quantity), expiryTime,
-        location: { lat: 0, lng: 0 }, details
+        location: { lat: parseFloat(lat) || 0, lng: parseFloat(lng) || 0 }, details
       }, authHeaders())
-      setFoodName(''); setQuantity(1); setExpiryTime(''); setDetails('')
+      setFoodName(''); setQuantity(1); setExpiryTime(''); setDetails(''); setLat(''); setLng('')
       fetchMyFoods()
       setTab('my-foods')
       showAlert('Food Posted!', 'Your donation is now visible to nearby NGOs.')
@@ -69,6 +80,23 @@ export default function ProviderDashboard() {
       showAlert('Rejected', 'The request has been rejected.')
       fetchRequests()
     } catch (e) { showAlert('Error', 'Failed to reject request.') }
+  }
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) return showAlert('Error', 'Geolocation is not supported by your browser.')
+    setIsDetecting(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toString())
+        setLng(pos.coords.longitude.toString())
+        setIsDetecting(false)
+      },
+      () => {
+        setIsDetecting(false)
+        showAlert('Location Error', 'Unable to retrieve your current location.')
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
   }
 
   const pendingRequestCount = Object.values(requests).reduce((sum, g) =>
@@ -132,6 +160,28 @@ export default function ProviderDashboard() {
                     <label className="text-sm font-bold text-slate-700">Best Before / Expiry</label>
                     <input type="datetime-local" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm font-medium" value={expiryTime} onChange={e => setExpiryTime(e.target.value)} required />
                   </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-bold text-slate-700">Pickup Location (Coordinates)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="relative">
+                       <input type="number" step="any" className="w-full px-4 py-3 pl-10 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm font-medium" placeholder="Latitude" value={lat} onChange={e => setLat(e.target.value)} required />
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">Lat</span>
+                     </div>
+                     <div className="relative">
+                       <input type="number" step="any" className="w-full px-4 py-3 pl-10 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm font-medium" placeholder="Longitude" value={lng} onChange={e => setLng(e.target.value)} required />
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">Lng</span>
+                     </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={detectLocation}
+                    disabled={isDetecting}
+                    className="mt-2 py-2 px-4 bg-emerald-50 text-emerald-600 font-bold rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-all active:scale-95 text-[10px] flex items-center justify-center gap-2 uppercase tracking-widest w-fit"
+                  >
+                    {isDetecting ? 'Detecting...' : '🎯 Detect My Current Location'}
+                  </button>
                 </div>
 
                 <div className="flex flex-col gap-1.5">

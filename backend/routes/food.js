@@ -26,13 +26,21 @@ router.post('/create', auth, isProvider, isActiveUser, async (req, res) => {
     const ngos = await User.find({ role: 'ngo', isActive: true });
     const notifications = [];
 
+    const foodLat = parseFloat(location.lat);
+    const foodLng = parseFloat(location.lng);
+
     for (const ngo of ngos) {
       if (ngo.location && ngo.location.lat != null && ngo.location.lng != null) {
-        const dist = haversineDistance(location.lat, location.lng, ngo.location.lat, ngo.location.lng);
+        const ngoLat = parseFloat(ngo.location.lat);
+        const ngoLng = parseFloat(ngo.location.lng);
+        
+        const dist = haversineDistance(foodLat, foodLng, ngoLat, ngoLng);
         console.log(`Checking NGO ${ngo.name} at distance ${dist.toFixed(2)}km`);
+        
         if (dist <= 5) { // 5km radius
           notifications.push({
             recipient: ngo._id,
+            type: 'new_food',
             message: `New food available nearby: ${foodName} (${quantity} units)`,
             foodId: food._id
           });

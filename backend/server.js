@@ -35,6 +35,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/food', require('./routes/food'));
 app.use('/api/provider', require('./routes/provider'));
 app.use('/api/ngo', require('./routes/ngo'));
+app.use('/api/notifications', require('./routes/notification'));
 
 const PORT = process.env.PORT || 5000;
 
