@@ -93,7 +93,22 @@ export default function ProviderDashboard() {
     } catch (e) { showAlert('Error', 'Failed to reject request.') }
   }
 
-  
+  const detectLocation = () => {
+    if (!navigator.geolocation) return showAlert('Error', 'Geolocation is not supported by your browser.')
+    setIsDetecting(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toString())
+        setLng(pos.coords.longitude.toString())
+        setIsDetecting(false)
+      },
+      () => {
+        setIsDetecting(false)
+        showAlert('Location Error', 'Unable to retrieve your current location.')
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   const deleteFood = async (foodId) => {
     if (!(await showConfirm('Delete Post', 'Are you sure you want to delete this food post?'))) return
