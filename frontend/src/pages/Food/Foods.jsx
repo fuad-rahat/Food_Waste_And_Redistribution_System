@@ -181,9 +181,12 @@ export default function Foods() {
                      <div className="flex-1 pr-4 truncate">
                         <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest rounded-lg mb-2 inline-block">Verified Safe</span>
                         <h4 className="text-xl font-black text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors truncate">{f.foodName}</h4>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
-                          🏪 {f.providerId?.name || 'Local Provider'}
-                        </p>
+                        <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                          🏪 
+                          <Link to={`/profile/${f.providerId?._id || f.providerId?.slug}`} className="hover:text-emerald-600 transition-colors">
+                            {f.providerId?.name || 'Local Provider'}
+                          </Link>
+                        </div>
                         {f.distanceKm != null && (
                           <div className="flex items-center gap-1.5 mt-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

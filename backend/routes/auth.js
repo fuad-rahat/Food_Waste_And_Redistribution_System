@@ -6,8 +6,10 @@ const User = require('../models/User');
 const Request = require('../models/Request');
 const Collection = require('../models/Collection');
 const DistributionProof = require('../models/DistributionProof');
+const Food = require('../models/Food');
 const auth = require('../middleware/auth');
 const { haversineDistance } = require('../utils/geo');
+const mongoose = require('mongoose');
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -122,45 +124,71 @@ router.put('/profile', auth, async (req, res) => {
   }
 });
 
-// GET /api/auth/profile/:id — fetch public profile data
+// GET /api/auth/profile/:id — fetch public profile data (id can be ObjectId or slug)
 router.get('/profile/:id', auth, async (req, res) => {
   try {
-    const targetUser = await User.findById(req.params.id).select('-password');
+    let targetUser;
+
+    // PRIMARY LOOKUP: Direct Database ID (Highest Reliability)
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      targetUser = await User.findById(req.params.id).select('-password');
+    }
+    
+    // SECONDARY LOOKUP: Slug Fallback (Public Sharing)
+    if (!targetUser) {
+      // 1. Exact match first (case-sensitive)
+      targetUser = await User.findOne({ slug: req.params.id }).select('-password');
+      
+      // 2. Case-insensitive fallback (slug collision safe)
+      if (!targetUser) {
+        targetUser = await User.findOne({ slug: { $regex: new RegExp(`^${req.params.id}$`, 'i') } }).select('-password');
+      }
+    }
+
     if (!targetUser) return res.status(404).json({ message: 'User not found' });
+    
+    // Final verification of role mapping
+    const targetUserId = targetUser._id;
+    const userRole = (targetUser.role || '').toLowerCase();
+    const isSelf = String(targetUserId) === String(req.user.id);
+    const isAdmin = req.user.role === 'admin';
 
-    const isSelf = String(targetUser._id) === String(req.user.id);
-
-    // Privacy rule: Providers are private (only self).
-    if (targetUser.role === 'provider' && !isSelf) {
+    // Privacy rule: Providers are private (only self and admin can view).
+    if (userRole === 'provider' && !isSelf && !isAdmin) {
       return res.status(403).json({ message: 'Provider profiles are private' });
     }
 
-    // Privacy rule: NGO documents are hidden for public view
-    if (targetUser.role === 'ngo' && !isSelf) {
+    // Privacy rule: NGO documents are hidden for public view (only self and admin can view).
+    if (userRole === 'ngo' && !isSelf && !isAdmin) {
       targetUser.legalDocumentImages = [];
     }
 
     // For NGOs, fetch public stats and activities
-    let stats = null;
+    let stats = { total: 0, accepted: 0, pending: 0 };
     let activities = [];
-    if (targetUser.role === 'ngo') {
+    if (userRole === 'ngo') {
       const { lat, lng } = req.query;
       const userLat = lat ? parseFloat(lat) : null;
       const userLng = lng ? parseFloat(lng) : null;
 
-      const allReqs = await Request.find({ ngoId: targetUser._id });
+      const targetId = new mongoose.Types.ObjectId(String(targetUserId));
+      const targetIdStr = String(targetUserId);
+
+      // Fetch all required data in parallel with dual-format ID support
+      const allReqs = await Request.find({ $or: [{ ngoId: targetId }, { ngoId: targetIdStr }] });
+      const [proofs, collections] = await Promise.all([
+        DistributionProof.find({ $or: [{ ngoId: targetId }, { ngoId: targetIdStr }] }),
+        Collection.find({ $or: [{ ngoId: targetId }, { ngoId: targetIdStr }], pickup_status: 'completed' })
+          .populate('foodId')
+          .sort({ collectedAt: -1 })
+      ]);
+
       stats = {
         total: allReqs.length,
         accepted: allReqs.filter(r => r.status === 'accepted').length,
-        pending: allReqs.filter(r => r.status === 'pending').length
+        pending: allReqs.filter(r => r.status === 'pending').length,
+        _isNGO: true
       };
-
-      // Completed pickups and their proofs
-      const collections = await Collection.find({ ngoId: targetUser._id, pickup_status: 'completed' })
-        .populate('foodId')
-        .sort({ collectedAt: -1 });
-      
-      const proofs = await DistributionProof.find({ ngoId: targetUser._id });
 
       activities = collections.map(col => {
         const proof = proofs.find(p => String(p.collectionId) === String(col._id));
@@ -170,17 +198,17 @@ router.get('/profile/:id', auth, async (req, res) => {
         }
         return {
           collectionId: col._id,
-          foodName: col.foodId?.foodName || 'Food Item',
+          foodName: col.foodId?.foodName || 'Food Distribution',
           pickupDate: col.collectedAt,
           proofImages: proof ? proof.proofImages : [],
-          description: proof ? proof.description : '',
+          description: proof ? proof.description || 'Distributed to the community.' : 'Successfully picked up and distributed.',
           hasProof: !!proof,
           distanceKm
         };
       });
     }
 
-    res.json({ user: targetUser, stats, activities });
+    res.json({ user: targetUser, stats, activities, _debug: { targetUserId, userRole, reqUserId: req.user.id } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

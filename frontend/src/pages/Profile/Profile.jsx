@@ -83,18 +83,18 @@ export default function Profile() {
     }
   }, [userData])
 
-  useEffect(() => { 
+  useEffect(() => {
     if (user && user.role === 'ngo' && !lat) {
-       navigator.geolocation.getCurrentPosition(
-         pos => {
-           const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-           setLat(c.lat); setLng(c.lng);
-           loadProfile(c);
-         },
-         () => loadProfile()
-       );
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setLat(c.lat); setLng(c.lng);
+          loadProfile(c);
+        },
+        () => loadProfile()
+      );
     } else if (user) {
-       loadProfile() 
+      loadProfile()
     }
   }, [id])
 
@@ -233,14 +233,14 @@ export default function Profile() {
 
             {/* Edit Trigger */}
             <div className="md:self-start">
-               {!isViewOnly && (
-                 <button 
-                   onClick={() => setIsEditing(!isEditing)}
-                   className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-md border border-white/20 transition-all flex items-center gap-2"
-                 >
-                   {isEditing ? '🔌 Cancel' : '⚙️ Edit Profile'}
-                 </button>
-               )}
+              {!isViewOnly && (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-md border border-white/20 transition-all flex items-center gap-2"
+                >
+                  {isEditing ? '🔌 Cancel' : '⚙️ Edit Profile'}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -270,128 +270,128 @@ export default function Profile() {
         {isEditing && (
           <div className="mb-12 animate-fadeIn">
             <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-xl border border-slate-100 relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16" />
-               <div className="relative">
-                 <h2 className="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
-                   <span className="bg-emerald-100 p-2 rounded-xl text-xl">📝</span> Update Account Details
-                 </h2>
-                 <form onSubmit={saveProfile} className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16" />
+              <div className="relative">
+                <h2 className="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
+                  <span className="bg-emerald-100 p-2 rounded-xl text-xl">📝</span> Update Account Details
+                </h2>
+                <form onSubmit={saveProfile} className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">Full Name / Organization</label>
+                      <input className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} required />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-slate-400">Email Address (Contact)</label>
+                      <input type="email" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} required />
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="flex flex-col gap-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Full Name / Organization</label>
-                        <input className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} required />
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Latitude</label>
+                        <input type="number" step="any" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.lat} onChange={e => setEditData({ ...editData, lat: e.target.value })} required />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Email Address (Contact)</label>
-                        <input type="email" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} required />
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400">Longitude</label>
+                        <input type="number" step="any" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.lng} onChange={e => setEditData({ ...editData, lng: e.target.value })} required />
                       </div>
                     </div>
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Latitude</label>
-                          <input type="number" step="any" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.lat} onChange={e => setEditData({...editData, lat: e.target.value})} required />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-xs font-black uppercase tracking-widest text-slate-400">Longitude</label>
-                          <input type="number" step="any" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-700" value={editData.lng} onChange={e => setEditData({...editData, lng: e.target.value})} required />
-                        </div>
-                      </div>
-                      <div className="pt-4 flex gap-4">
-                         <button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-emerald-100 transition-all active:scale-95">
-                           🚀 Save Changes
-                         </button>
-                         <button type="button" onClick={() => setIsEditing(false)} className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm transition-all">
-                           Back
-                         </button>
-                      </div>
+                    <div className="pt-4 flex gap-4">
+                      <button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-emerald-100 transition-all active:scale-95">
+                        🚀 Save Changes
+                      </button>
+                      <button type="button" onClick={() => setIsEditing(false)} className="px-8 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm transition-all">
+                        Back
+                      </button>
                     </div>
-                 </form>
-               </div>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* ── IMPACT GALLERY OR VERIFICATION DOCUMENTS ── */}
         <div className="mb-12">
-           <div className="flex items-center gap-3 mb-6">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${isViewOnly && !isProvider ? 'bg-indigo-100 text-indigo-700' : 'bg-violet-100 text-violet-700'}`}>
-                {isViewOnly && !isProvider ? '🎨' : '📄'}
-              </div>
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-900">
-                  {isViewOnly && !isProvider ? 'Impact Gallery & Recent Activity' : 'Verification Documents'}
-                </h2>
-                <p className="text-slate-400 text-sm">
-                  {isViewOnly && !isProvider ? 'Documented food distributions and community impact' : 'Legal identifications uploaded during registration'}
-                </p>
-              </div>
-           </div>
-           
-           {/* If viewing public NGO profile, show activities */}
-           {isViewOnly && !isProvider ? (
-             <div className="space-y-6">
-               {activities.length === 0 ? (
-                 <div className="py-20 bg-white border border-dashed border-slate-200 rounded-[32px] text-center">
-                    <span className="text-5xl mb-4 block">🚚</span>
-                    <p className="text-slate-400 font-bold">No orders picked up yet</p>
-                    <p className="text-slate-300 text-sm">This NGO hasn't completed any food collections yet.</p>
-                 </div>
-               ) : (
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                   {activities.map((act, i) => (
-                     <div key={i} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-all">
-                        {act.hasProof ? (
-                          <div className="aspect-video relative overflow-hidden bg-slate-100">
-                             <img src={act.proofImages[0]} alt="Impact" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                             <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg shadow-lg">Verified Impact</div>
-                          </div>
-                        ) : (
-                          <div className="aspect-video flex flex-col items-center justify-center bg-slate-50 border-b border-slate-100 text-slate-400 p-6 text-center">
-                             <span className="text-3xl mb-2">📸</span>
-                             <p className="text-[10px] font-black uppercase tracking-widest leading-tight">Proof of distribution pending</p>
-                             <p className="text-[9px] mt-1 opacity-70">Distribution documentation is required for every pickup.</p>
-                          </div>
-                        )}
-                        <div className="p-5 flex-1 flex flex-col">
-                           <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-extrabold text-slate-800 leading-tight">{act.foodName}</h4>
-                              <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(act.pickupDate).toLocaleDateString()}</span>
-                           </div>
-                           {act.description && <p className="text-xs text-slate-500 line-clamp-2 italic mb-3">"{act.description}"</p>}
-                           <div className="mt-auto pt-3 border-t border-slate-50 flex items-center justify-between">
-                              <span className={`text-[9px] font-black uppercase tracking-widest ${act.hasProof ? 'text-emerald-600' : 'text-amber-500'}`}>
-                                {act.hasProof ? '✅ Documentation Complete' : '⏳ Pending Evidence'}
-                                {act.distanceKm != null && ` (${act.distanceKm.toFixed(1)} km)`}
-                              </span>
-                              {act.hasProof && act.proofImages.length > 1 && (
-                                <span className="text-[9px] font-bold text-slate-300">+{act.proofImages.length - 1} more photos</span>
-                              )}
-                           </div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${isViewOnly && !isProvider ? 'bg-indigo-100 text-indigo-700' : 'bg-violet-100 text-violet-700'}`}>
+              {isViewOnly && !isProvider ? '🎨' : '📄'}
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-900">
+                {isViewOnly && !isProvider ? 'Impact Gallery & Recent Activity' : 'Verification Documents'}
+              </h2>
+              <p className="text-slate-400 text-sm">
+                {isViewOnly && !isProvider ? 'Documented food distributions and community impact' : 'Legal identifications uploaded during registration'}
+              </p>
+            </div>
+          </div>
+
+          {/* If viewing public NGO profile, show activities */}
+          {isViewOnly && !isProvider ? (
+            <div className="space-y-6">
+              {activities.length === 0 ? (
+                <div className="py-20 bg-white border border-dashed border-slate-200 rounded-[32px] text-center">
+                  <span className="text-5xl mb-4 block">🚚</span>
+                  <p className="text-slate-400 font-bold">No orders picked up yet</p>
+                  <p className="text-slate-300 text-sm">This NGO hasn't completed any food collections yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activities.map((act, i) => (
+                    <div key={i} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-all">
+                      {act.hasProof ? (
+                        <div className="aspect-video relative overflow-hidden bg-slate-100">
+                          <img src={act.proofImages[0]} alt="Impact" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg shadow-lg">Verified Impact</div>
                         </div>
-                     </div>
-                   ))}
-                 </div>
-               )}
-             </div>
-           ) : (
-             /* Otherwise show verification documents (self view or provider) */
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {userData?.legalDocumentImages?.map((url, i) => (
-                  <div key={i} className="group relative bg-white p-2 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden aspect-square">
-                     <img src={url} alt={`Doc ${i+1}`} className="w-full h-full object-cover rounded-xl grayscale group-hover:grayscale-0 transition-all" />
-                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <a href={url} target="_blank" rel="noreferrer" className="bg-white text-slate-900 p-2 rounded-lg text-xs font-black uppercase">View</a>
-                     </div>
+                      ) : (
+                        <div className="aspect-video flex flex-col items-center justify-center bg-slate-50 border-b border-slate-100 text-slate-400 p-6 text-center">
+                          <span className="text-3xl mb-2">📸</span>
+                          <p className="text-[10px] font-black uppercase tracking-widest leading-tight">Proof of distribution pending</p>
+                          <p className="text-[9px] mt-1 opacity-70">Distribution documentation is required for every pickup.</p>
+                        </div>
+                      )}
+                      <div className="p-5 flex-1 flex flex-col">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-extrabold text-slate-800 leading-tight">{act.foodName}</h4>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(act.pickupDate).toLocaleDateString()}</span>
+                        </div>
+                        {act.description && <p className="text-xs text-slate-500 line-clamp-2 italic mb-3">"{act.description}"</p>}
+                        <div className="mt-auto pt-3 border-t border-slate-50 flex items-center justify-between">
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${act.hasProof ? 'text-emerald-600' : 'text-amber-500'}`}>
+                            {act.hasProof ? '✅ Documentation Complete' : '⏳ Pending Evidence'}
+                            {act.distanceKm != null && ` (${act.distanceKm.toFixed(1)} km)`}
+                          </span>
+                          {act.hasProof && act.proofImages.length > 1 && (
+                            <span className="text-[9px] font-bold text-slate-300">+{act.proofImages.length - 1} more photos</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Otherwise show verification documents (self view or provider) */
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {userData?.legalDocumentImages?.map((url, i) => (
+                <div key={i} className="group relative bg-white p-2 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden aspect-square">
+                  <img src={url} alt={`Doc ${i + 1}`} className="w-full h-full object-cover rounded-xl grayscale group-hover:grayscale-0 transition-all" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <a href={url} target="_blank" rel="noreferrer" className="bg-white text-slate-900 p-2 rounded-lg text-xs font-black uppercase">View</a>
                   </div>
-                ))}
-                {(!userData?.legalDocumentImages || userData.legalDocumentImages.length === 0) && (
-                  <div className="col-span-full py-10 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 font-bold">
-                    No documents uploaded
-                  </div>
-                )}
-             </div>
-           )}
+                </div>
+              ))}
+              {(!userData?.legalDocumentImages || userData.legalDocumentImages.length === 0) && (
+                <div className="col-span-full py-10 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 font-bold">
+                  No documents uploaded
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── PROVIDER: grouped request cards ── */}
@@ -524,11 +524,11 @@ export default function Profile() {
 
         {/* Hide history/requests table for others */}
         {isViewOnly && (
-           <div className="mt-12 bg-white rounded-3xl p-10 border border-slate-100 text-center shadow-sm">
-              <div className="text-4xl mb-4">ℹ️</div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Request History Private</h3>
-              <p className="text-slate-500 max-w-sm mx-auto">Specific request histories and distribution details are private. Summary stats and verified documents are shown for NGO accountability.</p>
-           </div>
+          <div className="mt-12 bg-white rounded-3xl p-10 border border-slate-100 text-center shadow-sm">
+            <div className="text-4xl mb-4">ℹ️</div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Request History Private</h3>
+            <p className="text-slate-500 max-w-sm mx-auto">Specific request histories and distribution details are private. Summary stats and verified documents are shown for NGO accountability.</p>
+          </div>
         )}
       </div>
     </div>

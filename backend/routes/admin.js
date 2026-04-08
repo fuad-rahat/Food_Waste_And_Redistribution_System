@@ -69,7 +69,7 @@ router.delete('/user/:id/delete', auth, isAdmin, async (req, res) => {
 // GET /api/admin/foods — all foods
 router.get('/foods', auth, isAdmin, async (req, res) => {
   try {
-    const foods = await Food.find().populate('providerId', 'name').sort({ createdAt: -1 });
+    const foods = await Food.find().populate('providerId', 'name slug').sort({ createdAt: -1 });
     res.json({ foods });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -137,12 +137,12 @@ router.get('/stats', auth, isAdmin, async (req, res) => {
 router.get('/distribution-proofs', auth, isAdmin, async (req, res) => {
   try {
     const proofs = await DistributionProof.find()
-      .populate('ngoId', 'name email')
+      .populate('ngoId', 'name email slug')
       .populate({
         path: 'collectionId',
         populate: [
           { path: 'foodId', select: 'foodName' },
-          { path: 'providerId', select: 'name' }
+          { path: 'providerId', select: 'name slug' }
         ]
       })
       .sort({ createdAt: -1 });

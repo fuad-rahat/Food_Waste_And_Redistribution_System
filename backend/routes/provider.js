@@ -6,25 +6,53 @@ const Request = require('../models/Request');
 const Food = require('../models/Food');
 const Collection = require('../models/Collection');
 const Notification = require('../models/Notification');
+const DistributionProof = require('../models/DistributionProof');
 
 // GET /api/provider/requests — view requests grouped by food
 router.get('/requests', auth, isProvider, isActiveUser, async (req, res) => {
   try {
     const requests = await Request.find({ providerId: req.user.id })
-      .populate('ngoId', 'name email')
+      .populate('ngoId', 'name email slug')
       .populate('foodId')
       .sort({ createdAt: -1 });
     const grouped = {};
     requests.forEach(r => {
+      // If foodId is null (food was deleted), we use a placeholder or skip it.
+      // Skipping ensures the dashboard doesn't crash.
+      if (!r.foodId) return; 
+
       const fid = String(r.foodId._id);
       if (!grouped[fid]) grouped[fid] = { food: r.foodId, requests: [] };
       grouped[fid].requests.push(r);
     });
     res.json({ grouped });
   } catch (err) {
+    console.error('Error fetching provider requests:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// GET /api/provider/distribution-proofs — view proofs for provider's food
+router.get('/distribution-proofs', auth, isProvider, isActiveUser, async (req, res) => {
+  try {
+    // Find all collections where this user is the provider
+    const collections = await Collection.find({ providerId: req.user.id }).select('_id');
+    const colIds = collections.map(c => c._id);
+
+    // Find proofs matched with these collections
+    const proofs = await DistributionProof.find({ collectionId: { $in: colIds } })
+      .populate({ path: 'collectionId', populate: { path: 'foodId' } })
+      .populate('ngoId', 'name email slug')
+      .sort({ uploadDate: -1 });
+    
+    res.json({ proofs });
+  } catch (err) {
+    console.error('Error fetching provider distribution proofs:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ... rest of file (accept/reject routes)
 
 // PUT /api/provider/request/:id/accept
 router.put('/request/:id/accept', auth, isProvider, isActiveUser, async (req, res) => {
@@ -107,6 +135,7 @@ router.put('/request/:id/reject', auth, isProvider, isActiveUser, async (req, re
     }).save();
     res.json({ message: 'Rejected', request: reqDoc });
   } catch (err) {
+    console.error('Error rejecting request:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
