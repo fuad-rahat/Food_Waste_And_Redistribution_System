@@ -98,60 +98,9 @@ export default function Profile() {
     }
   }, [id])
 
-  const loadProfile = async (coords = null) => {
-    try {
-      const token = getToken()
-      const uLat = coords?.lat || lat;
-      const uLng = coords?.lng || lng;
-      const query = uLat && uLng ? `?lat=${uLat}&lng=${uLng}` : '';
-      if (id) {
-        // View another user's profile
-        try {
-          const res = await api.get('/api/auth/profile/' + id + query, { headers: { Authorization: 'Bearer ' + token } })
-          if (res.data?.user) {
-            setUserData(res.data.user)
-            if (res.data.stats) setPublicStats(res.data.stats)
-            if (res.data.activities) setActivities(res.data.activities)
-          }
-        } catch (e) {
-          showAlert('Private Account', e.response?.data?.message || 'Access denied.')
-          navigate('/')
-        }
-        return
-      }
+  
 
-      // View own profile
-      const resUser = await api.get('/api/auth/me', { headers: { Authorization: 'Bearer ' + token } }).catch(() => null)
-      if (resUser?.data?.user) setUserData(resUser.data.user)
-      if (user.role === 'provider') {
-        const [resFoods, pres] = await Promise.all([
-          api.get('/api/food/my-food', { headers: { Authorization: 'Bearer ' + token } }),
-          api.get('/api/provider/requests', { headers: { Authorization: 'Bearer ' + token } }),
-        ])
-        setFoods(resFoods.data.foods || [])
-        setGrouped(pres.data.grouped || {})
-      } else if (user.role === 'ngo') {
-        const res = await api.get('/api/ngo/requests', { headers: { Authorization: 'Bearer ' + token } })
-        setRequests(res.data.list || [])
-      }
-    } catch (e) { }
-  }
-
-  const saveProfile = async (e) => {
-    e.preventDefault()
-    try {
-      await api.put('/api/auth/profile', {
-        name: editData.name,
-        email: editData.email,
-        location: { lat: Number(editData.lat), lng: Number(editData.lng) }
-      }, { headers: { Authorization: 'Bearer ' + getToken() } })
-      showAlert('Success', 'Profile updated successfully!')
-      setIsEditing(false)
-      loadProfile()
-    } catch (e) {
-      showAlert('Error', e.response?.data?.message || 'Failed to update profile')
-    }
-  }
+  
 
   const accept = async (requestId, foodId) => {
     const amtStr = await showPrompt('Grant Amount', 'Enter amount you will give to this NGO (number)')
@@ -173,12 +122,17 @@ export default function Profile() {
     } catch { showAlert('Error', 'Failed to reject.') }
   }
 
-  const isViewOnly = !!id
-  const isProvider = isViewOnly ? userData?.role === 'provider' : user?.role === 'provider'
+  const isSelf = !id;
+  const profileRole = (userData?.role || '').toLowerCase();
+
+  const isViewNGO = profileRole === 'ngo';
+  const isViewProvider = profileRole === 'provider';
+
   const initials = (userData?.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-  const totalReq = isViewOnly ? (publicStats?.total || 0) : (isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.length, 0) : requests.length)
-  const acceptedCnt = isViewOnly ? (publicStats?.accepted || 0) : (isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'accepted').length, 0) : requests.filter(r => r.status === 'accepted').length)
-  const pendingCnt = isViewOnly ? (publicStats?.pending || 0) : (isProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'pending').length, 0) : requests.filter(r => r.status === 'pending').length)
+
+  const totalReq = !isSelf ? (publicStats?.total ?? 0) : (isViewProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.length, 0) : requests.length)
+  const acceptedCnt = !isSelf ? (publicStats?.accepted ?? 0) : (isViewProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'accepted').length, 0) : requests.filter(r => r.status === 'accepted').length)
+  const pendingCnt = !isSelf ? (publicStats?.pending ?? 0) : (isViewProvider ? Object.values(groupedRequests).reduce((s, g) => s + g.requests.filter(r => r.status === 'pending').length, 0) : requests.filter(r => r.status === 'pending').length)
 
   if (!userData) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -187,7 +141,7 @@ export default function Profile() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div key={id || 'self'} className="min-h-screen bg-slate-50">
 
       {/* ══════════════════════════════ HERO BANNER ══════════════════════════════ */}
       <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-700 overflow-hidden">
@@ -201,7 +155,7 @@ export default function Profile() {
           <div className="flex flex-col md:flex-row md:items-end gap-8">
             {/* Avatar */}
             <div className={`w-28 h-28 rounded-3xl border-4 border-white/25 flex items-center justify-center text-white font-extrabold text-4xl shadow-2xl shrink-0
-              ${isProvider ? 'bg-gradient-to-br from-emerald-500 to-teal-500' : 'bg-gradient-to-br from-sky-500 to-blue-600'}`}>
+              ${isViewProvider ? 'bg-gradient-to-br from-emerald-500 to-teal-500' : 'bg-gradient-to-br from-sky-500 to-blue-600'}`}>
               {initials}
             </div>
 
@@ -209,9 +163,9 @@ export default function Profile() {
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-2">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/20 backdrop-blur-sm
-                  ${isProvider ? 'bg-emerald-500/30 text-emerald-100' : 'bg-sky-500/30 text-sky-100'}`}>
-                  {isProvider ? <IconStore s="w-3.5 h-3.5" /> : <IconOrg s="w-3.5 h-3.5" />}
-                  {isProvider ? 'Food Provider' : 'NGO Distributor'}
+                  ${isViewProvider ? 'bg-emerald-500/30 text-emerald-100' : 'bg-sky-500/30 text-sky-100'}`}>
+                  {isViewProvider ? <IconStore s="w-3.5 h-3.5" /> : <IconOrg s="w-3.5 h-3.5" />}
+                  {isViewProvider ? 'Food Provider' : 'NGO Distributor'}
                 </span>
                 <StatusBadge status={userData?.verificationStatus || 'pending_review'} />
               </div>
@@ -233,7 +187,7 @@ export default function Profile() {
 
             {/* Edit Trigger */}
             <div className="md:self-start">
-              {!isViewOnly && (
+              {isSelf && (
                 <button
                   onClick={() => setIsEditing(!isEditing)}
                   className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-md border border-white/20 transition-all flex items-center gap-2"
@@ -255,11 +209,11 @@ export default function Profile() {
 
       {/* ══════════════════════════ STATS ROW ══════════════════════════ */}
       <div className="max-w-7xl mx-auto px-6 md:px-10 -mt-14 mb-10 relative z-10">
-        <div className={`grid gap-5 ${isProvider ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'}`}>
+        <div className={`grid gap-5 ${isViewProvider ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'}`}>
           <StatCard label="Total Requests" value={totalReq} Icon={IconInbox} accent="bg-emerald-100 text-emerald-600" />
           <StatCard label="Accepted" value={acceptedCnt} Icon={IconCheck} accent="bg-sky-100 text-sky-600" />
           <StatCard label="Pending" value={pendingCnt} Icon={IconStar} accent="bg-amber-100 text-amber-600" />
-          {isProvider && <StatCard label="Food Listings" value={foods.length} Icon={IconBox} accent="bg-violet-100 text-violet-600" />}
+          {isViewProvider && <StatCard label="Food Listings" value={foods.length} Icon={IconBox} accent="bg-violet-100 text-violet-600" />}
         </div>
       </div>
 
@@ -315,22 +269,22 @@ export default function Profile() {
         {/* ── IMPACT GALLERY OR VERIFICATION DOCUMENTS ── */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-6">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${isViewOnly && !isProvider ? 'bg-indigo-100 text-indigo-700' : 'bg-violet-100 text-violet-700'}`}>
-              {isViewOnly && !isProvider ? '🎨' : '📄'}
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${isViewNGO ? 'bg-indigo-100 text-indigo-700' : 'bg-violet-100 text-violet-700'}`}>
+              {isViewNGO ? '🎨' : '📄'}
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-slate-900">
-                {isViewOnly && !isProvider ? 'Impact Gallery & Recent Activity' : 'Verification Documents'}
+                {isViewNGO ? 'Impact Gallery & Recent Activity' : 'Verification Documents'}
               </h2>
               <p className="text-slate-400 text-sm">
-                {isViewOnly && !isProvider ? 'Documented food distributions and community impact' : 'Legal identifications uploaded during registration'}
+                {isViewNGO ? (isSelf ? 'How your profile appears to donors and providers' : 'Documented food distributions and community impact') : 'Legal identifications uploaded during registration'}
               </p>
             </div>
           </div>
 
-          {/* If viewing public NGO profile, show activities */}
-          {isViewOnly && !isProvider ? (
-            <div className="space-y-6">
+          {/* Section 1: Impact Gallery (NGOs only) */}
+          {isViewNGO && (
+            <div className="space-y-6 mb-12">
               {activities.length === 0 ? (
                 <div className="py-20 bg-white border border-dashed border-slate-200 rounded-[32px] text-center">
                   <span className="text-5xl mb-4 block">🚚</span>
@@ -374,28 +328,38 @@ export default function Profile() {
                 </div>
               )}
             </div>
-          ) : (
-            /* Otherwise show verification documents (self view or provider) */
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {userData?.legalDocumentImages?.map((url, i) => (
-                <div key={i} className="group relative bg-white p-2 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden aspect-square">
-                  <img src={url} alt={`Doc ${i + 1}`} className="w-full h-full object-cover rounded-xl grayscale group-hover:grayscale-0 transition-all" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <a href={url} target="_blank" rel="noreferrer" className="bg-white text-slate-900 p-2 rounded-lg text-xs font-black uppercase">View</a>
-                  </div>
-                </div>
-              ))}
-              {(!userData?.legalDocumentImages || userData.legalDocumentImages.length === 0) && (
-                <div className="col-span-full py-10 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 font-bold">
-                  No documents uploaded
+          )}
+
+          {/* Section 2: Verification Documents (Visible only to owner/admin, or if it's a provider profile) */}
+          {(isSelf || !isViewNGO) && (
+            <div className={isViewNGO ? "mt-12" : ""}>
+              {isSelf && isViewNGO && (
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold bg-violet-100 text-violet-700">📄</div>
+                  <h2 className="text-xl font-extrabold text-slate-900">Your Private IDs</h2>
                 </div>
               )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {userData?.legalDocumentImages?.map((url, i) => (
+                  <div key={i} className="group relative bg-white p-2 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden aspect-square">
+                    <img src={url} alt={`Doc ${i + 1}`} className="w-full h-full object-cover rounded-xl grayscale group-hover:grayscale-0 transition-all" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <a href={url} target="_blank" rel="noreferrer" className="bg-white text-slate-900 p-2 rounded-lg text-xs font-black uppercase">View</a>
+                    </div>
+                  </div>
+                ))}
+                {(!userData?.legalDocumentImages || userData.legalDocumentImages.length === 0) && (
+                  <div className="col-span-full py-10 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 font-bold">
+                    No documents uploaded
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {/* ── PROVIDER: grouped request cards ── */}
-        {isProvider && (
+        {isViewProvider && (
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-700">
@@ -438,7 +402,7 @@ export default function Profile() {
                         <div key={r._id} className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-5 hover:bg-slate-50/60 transition-colors rounded-2xl">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                              <Link to={"/profile/" + r.ngoId?._id} className="font-bold text-slate-900 hover:text-emerald-600 transition-colors">{r.ngoId?.name}</Link>
+                              <Link to={"/profile/" + (r.ngoId?.slug || r.ngoId?._id)} className="font-bold text-slate-900 hover:text-emerald-600 transition-colors">{r.ngoId?.name}</Link>
                               <StatusBadge status={r.status} />
                             </div>
                             <div className="flex gap-4 text-xs text-slate-500 font-medium">
@@ -508,7 +472,7 @@ export default function Profile() {
                       {requests.map((r, i) => (
                         <tr key={r._id} className={`border-b border-slate-50 hover:bg-emerald-50/30 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-50/40'}`}>
                           <td className="py-5 px-7 font-bold text-slate-900">{r.foodId?.foodName || '—'}</td>
-                          <td className="py-5 px-7 text-slate-500 font-medium text-sm">{r.foodId?.provider?.name || '—'}</td>
+                          <td className="py-5 px-7 text-slate-500 font-medium text-sm">{r.providerId?.name || '—'}</td>
                           <td className="py-5 px-7 font-semibold text-slate-700 text-sm">{r.requestedAmount} units</td>
                           <td className="py-5 px-7"><StatusBadge status={r.status} /></td>
                           <td className="py-5 px-7 font-extrabold text-emerald-600 text-sm">{r.grantedAmount || 0}</td>
@@ -523,7 +487,7 @@ export default function Profile() {
         )}
 
         {/* Hide history/requests table for others */}
-        {isViewOnly && (
+        {!isSelf && (
           <div className="mt-12 bg-white rounded-3xl p-10 border border-slate-100 text-center shadow-sm">
             <div className="text-4xl mb-4">ℹ️</div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">Request History Private</h3>
