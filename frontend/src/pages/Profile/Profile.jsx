@@ -98,9 +98,81 @@ export default function Profile() {
     }
   }, [id])
 
-  
+  const loadProfile = async (coords = null) => {
+    try {
+      const token = getToken()
+      const uLat = coords?.lat || lat;
+      const uLng = coords?.lng || lng;
+      const query = uLat && uLng ? `?lat=${uLat}&lng=${uLng}` : '';
+      if (id) {
+        try {
+          const res = await api.get('/api/auth/profile/' + id + query, { headers: { Authorization: 'Bearer ' + token } })
+          if (res.data?.user) {
+            setUserData(res.data.user);
+            if (res.data.stats) {
+              setPublicStats(res.data.stats);
+            } else {
+              setPublicStats({ total: 0, accepted: 0, pending: 0 });
+            }
+            if (res.data.activities) {
+              setActivities(res.data.activities);
+            } else {
+              setActivities([]);
+            }
+          }
+        } catch (e) {
+          const status = e.response?.status;
+          const msg = e.response?.data?.message || 'Access denied.';
+          const title = status === 403 ? 'Private Profile' : status === 404 ? 'User Not Found' : 'Error';
+          showAlert(title, msg);
+          navigate('/');
+        }
+        return
+      }
 
-  
+      const resUser = await api.get('/api/auth/me', { headers: { Authorization: 'Bearer ' + token } }).catch(() => null)
+      if (resUser?.data?.user) {
+        const u = resUser.data.user;
+        setUserData(u);
+
+        // NGOs checking themselves should still see their rich public stats/activities
+        if (u.role === 'ngo') {
+          try {
+            const resRich = await api.get('/api/auth/profile/' + u._id + query, { headers: { Authorization: 'Bearer ' + token } })
+            if (resRich.data.stats) setPublicStats(resRich.data.stats);
+            if (resRich.data.activities) setActivities(resRich.data.activities);
+          } catch (e) { console.error("Rich fetch failed", e); }
+        }
+      }
+      if (user.role === 'provider') {
+        const [resFoods, pres] = await Promise.all([
+          api.get('/api/food/my-food', { headers: { Authorization: 'Bearer ' + token } }),
+          api.get('/api/provider/requests', { headers: { Authorization: 'Bearer ' + token } }),
+        ])
+        setFoods(resFoods.data.foods || [])
+        setGrouped(pres.data.grouped || {})
+      } else if (user.role === 'ngo') {
+        const res = await api.get('/api/ngo/requests', { headers: { Authorization: 'Bearer ' + token } })
+        setRequests(res.data.list || [])
+      }
+    } catch (e) { }
+  }
+
+  const saveProfile = async (e) => {
+    e.preventDefault()
+    try {
+      await api.put('/api/auth/profile', {
+        name: editData.name,
+        email: editData.email,
+        location: { lat: Number(editData.lat), lng: Number(editData.lng) }
+      }, { headers: { Authorization: 'Bearer ' + getToken() } })
+      showAlert('Success', 'Profile updated successfully!')
+      setIsEditing(false)
+      loadProfile()
+    } catch (e) {
+      showAlert('Error', e.response?.data?.message || 'Failed to update profile')
+    }
+  }
 
   const accept = async (requestId, foodId) => {
     const amtStr = await showPrompt('Grant Amount', 'Enter amount you will give to this NGO (number)')
