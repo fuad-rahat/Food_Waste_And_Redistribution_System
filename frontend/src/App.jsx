@@ -12,6 +12,7 @@ import Footer from './components/Common/Footer'
 import NotificationBell from './components/Common/NotificationBell'
 import { ModalProvider } from './context/ModalContext'
 import { getUserFromToken, logout } from './utils/auth'
+import ScrollToTop from './components/Common/ScrollToTop'
 
 function RoleRoute({ role, children }) {
   const user = getUserFromToken()
@@ -53,6 +54,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <ScrollToTop />
       <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-[100] border-b border-slate-100">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
