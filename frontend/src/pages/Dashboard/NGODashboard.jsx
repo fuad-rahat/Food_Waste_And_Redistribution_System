@@ -42,6 +42,21 @@ export default function NGODashboard() {
     if (lat && lng) fetchNearby()
   }, [lat, lng])
 
+  const sortedRequests = React.useMemo(() => {
+    if (!myRequests) return [];
+    return [...myRequests].sort((a, b) => {
+      const getPriority = (req) => {
+        if (req.status === 'accepted' && req.collectionId?.pickup_status === 'completed') return 1; // Needs Proof
+        if (req.status === 'accepted' && req.collectionId?.pickup_status === 'pending') return 2;   // Needs Pickup
+        if (req.status === 'pending') return 3;
+        if (req.status === 'picked') return 4;
+        if (req.status === 'rejected') return 5;
+        return 6;
+      };
+      return getPriority(a) - getPriority(b);
+    });
+  }, [myRequests]);
+
   const getLocation = () => {
     if (!navigator.geolocation) return
     setGeoLoading(true)
@@ -245,7 +260,7 @@ export default function NGODashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {myRequests.map(r => (
+                {sortedRequests.map(r => (
                   <div key={r._id} className={`bg-white rounded-[2.5rem] p-8 border transition-all ${r.status === 'accepted' ? 'border-indigo-100 shadow-xl' : 'border-slate-100 shadow-sm'}`}>
                     <div className="flex justify-between items-start gap-4 mb-8">
                        <div className="flex items-center gap-4">
