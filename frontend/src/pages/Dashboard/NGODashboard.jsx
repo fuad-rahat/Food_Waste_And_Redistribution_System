@@ -30,6 +30,7 @@ export default function NGODashboard() {
   const [requestModal, setRequestModal] = useState(null)
   const [reqMsg, setReqMsg] = useState('')
   const [reqAmount, setReqAmount] = useState(1)
+  const [viewProofModal, setViewProofModal] = useState(null)
 
   useEffect(() => {
     getLocation()
@@ -261,8 +262,13 @@ export default function NGODashboard() {
                              </p>
                           </div>
                        </div>
-                       <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${r.status === 'accepted' ? 'bg-emerald-100 text-emerald-600' : r.status === 'rejected' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
-                         {r.status}
+                       <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
+                         r.status === 'picked' ? 'bg-indigo-100 text-indigo-600' : 
+                         r.status === 'accepted' ? 'bg-emerald-100 text-emerald-600' : 
+                         r.status === 'rejected' ? 'bg-rose-100 text-rose-600' : 
+                         'bg-amber-100 text-amber-600'
+                       }`}>
+                         {r.status === 'picked' ? 'Picked' : r.status}
                        </span>
                     </div>
 
@@ -326,7 +332,12 @@ export default function NGODashboard() {
                        <p className="text-sm font-medium text-slate-500 line-clamp-2 italic leading-relaxed mb-6">"{p.description || 'Successfully distributed to the community members.'}"</p>
                        <div className="pt-4 border-t border-slate-50 flex justify-between items-center text-[9px] font-black text-slate-300 uppercase tracking-widest">
                           <span>Shared {new Date(p.uploadDate).toLocaleDateString()}</span>
-                          <span className="text-indigo-500">View Proof →</span>
+                          <button 
+                            onClick={() => setViewProofModal(p)}
+                            className="bg-transparent border-none p-0 text-indigo-500 font-black cursor-pointer hover:text-indigo-700 transition-colors uppercase tracking-widest text-[9px]"
+                          >
+                            View Proof →
+                          </button>
                        </div>
                     </div>
                   </div>
@@ -383,10 +394,63 @@ export default function NGODashboard() {
                  <div className="flex gap-4 pt-4">
                     <button type="button" onClick={() => setSelectedCol(null)} className="flex-1 py-4 bg-slate-100 text-slate-500 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition-all border-none cursor-pointer">Back</button>
                     <button type="submit" disabled={uploading} className="flex-[2] py-4 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 border-none cursor-pointer">
-                      {uploading ? 'Confirming...' : '✨ Confirm Rescue'}
+                       {uploading ? 'Confirming...' : '✨ Confirm Rescue'}
                     </button>
                  </div>
               </form>
+           </div>
+        </div>
+      )}
+
+      {/* VIEW PROOF MODAL */}
+      {viewProofModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fadeIn" onClick={() => setViewProofModal(null)}>
+           <div className="relative bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl animate-scaleIn" onClick={e => e.stopPropagation()}>
+              <div className="flex flex-col md:flex-row h-full max-h-[85vh]">
+                 <div className="md:w-1/2 bg-slate-50 flex flex-col">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+                       {viewProofModal.proofImages.map((img, i) => (
+                          <img key={i} src={img} alt={`Proof ${i+1}`} className="w-full rounded-2xl shadow-sm border border-slate-100" />
+                       ))}
+                    </div>
+                 </div>
+                 <div className="md:w-1/2 p-10 flex flex-col justify-between">
+                    <div>
+                       <div className="flex justify-between items-start mb-6">
+                          <span className="bg-indigo-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest italic shadow-lg shadow-indigo-100">Impact Evidence</span>
+                          <button onClick={() => setViewProofModal(null)} className="text-slate-300 hover:text-slate-500 transition-colors bg-transparent border-none cursor-pointer text-xl">✕</button>
+                       </div>
+                       <h3 className="text-2xl font-black text-slate-800 tracking-tight italic uppercase mb-2">
+                          {viewProofModal.collectionId?.foodId?.foodName || 'Donation Impact'}
+                       </h3>
+                       <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-8">Shared on {new Date(viewProofModal.uploadDate).toLocaleDateString()}</p>
+                       
+                       <div className="space-y-6">
+                          <div>
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Distribution Details</label>
+                             <div className="p-6 rounded-[2rem] bg-indigo-50/30 border border-indigo-100/50 text-slate-600 italic leading-relaxed text-sm">
+                                "{viewProofModal.description || 'Successfully distributed to the community members.'}"
+                             </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                <p className="text-sm font-black text-emerald-600 uppercase">Verified</p>
+                             </div>
+                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Type</p>
+                                <p className="text-sm font-black text-slate-700 uppercase">Direct Relief</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                    
+                    <button onClick={() => setViewProofModal(null)} className="mt-10 w-full py-4 bg-slate-800 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-slate-200 border-none cursor-pointer">
+                       Close Proof View
+                    </button>
+                 </div>
+              </div>
            </div>
         </div>
       )}

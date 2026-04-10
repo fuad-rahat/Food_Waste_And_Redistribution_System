@@ -73,6 +73,10 @@ router.put('/collection/:id/complete', auth, isNGO, isActiveUser, async (req, re
     if (String(col.ngoId) !== req.user.id) return res.status(403).json({ message: 'Not allowed' });
     col.pickup_status = 'completed';
     await col.save();
+
+    // Also update associated request status to 'picked'
+    await Request.findOneAndUpdate({ collectionId: col._id }, { status: 'picked' });
+
     res.json({ message: 'Pickup marked complete', collection: col });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -166,6 +170,9 @@ router.post('/distribution-proof/:collectionId', auth, isNGO, isActiveUser, asyn
     // Auto-complete the pickup status
     col.pickup_status = 'completed';
     await col.save();
+
+    // Also update associated request status to 'picked'
+    await Request.findOneAndUpdate({ collectionId: col._id }, { status: 'picked' });
 
     res.json({ message: 'Distribution proof uploaded', proof });
   } catch (err) {
