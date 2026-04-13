@@ -86,7 +86,7 @@ export default function Foods() {
   }
 
   const hasRequested = (foodId) => {
-    return myRequests.some(r => (r.foodId?._id || r.foodId) === foodId && ['pending', 'accepted'].includes(r.status))
+    return myRequests.some(r => String(r.foodId?._id || r.foodId) === String(foodId) && ['pending', 'accepted', 'picked', 'distributed'].includes(r.status))
   }
 
   const requestFood = async (foodId, defaultQty) => {

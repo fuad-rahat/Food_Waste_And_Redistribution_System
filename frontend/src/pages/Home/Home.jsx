@@ -324,20 +324,10 @@ export default function Home() {
   }
 
   const hasRequested = (foodId) => {
-    try {
-      return myRequests.some(r => {
-        if (!r) return false;
-        const fid = r.foodId?._id || r.foodId;
-        if (String(fid) !== String(foodId)) return false;
-        if (r.status === 'pending') return true;
-        if (r.status === 'accepted') {
-          const col = r.collectionId;
-          const status = typeof col === 'object' ? col.pickup_status : null;
-          if (!col || status !== 'completed') return true;
-        }
-        return false;
-      });
-    } catch (e) { return false; }
+    return myRequests.some(r => {
+      const fid = r.foodId?._id || r.foodId;
+      return String(fid) === String(foodId) && ['pending', 'accepted', 'picked', 'distributed'].includes(r.status);
+    });
   }
 
   const providerBuckets = new Map()

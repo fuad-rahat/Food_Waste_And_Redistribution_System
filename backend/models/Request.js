@@ -8,7 +8,7 @@ const RequestSchema = new mongoose.Schema({
   message: { type: String },
   requestedAmount: { type: Number, default: 0 },
   grantedAmount: { type: Number },
-  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'picked'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'picked', 'distributed'], default: 'pending' },
   createdAt: { type: Date, default: Date.now }
 });
 

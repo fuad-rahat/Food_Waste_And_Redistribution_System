@@ -277,14 +277,15 @@ export default function NGODashboard() {
                              </p>
                           </div>
                        </div>
-                       <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
-                         r.status === 'picked' ? 'bg-indigo-100 text-indigo-600' : 
-                         r.status === 'accepted' ? 'bg-emerald-100 text-emerald-600' : 
-                         r.status === 'rejected' ? 'bg-rose-100 text-rose-600' : 
-                         'bg-amber-100 text-amber-600'
-                       }`}>
-                         {r.status === 'picked' ? 'Picked' : r.status}
-                       </span>
+                        <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
+                          r.status === 'distributed' ? 'bg-emerald-600 text-white' : 
+                          r.status === 'picked' ? 'bg-indigo-100 text-indigo-600' : 
+                          r.status === 'accepted' ? 'bg-emerald-100 text-emerald-600' : 
+                          r.status === 'rejected' ? 'bg-rose-100 text-rose-600' : 
+                          'bg-amber-100 text-amber-600'
+                        }`}>
+                          {r.status === 'distributed' ? 'Distributed' : r.status === 'picked' ? 'Picked' : r.status}
+                        </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-8">
@@ -298,7 +299,7 @@ export default function NGODashboard() {
                        </div>
                     </div>
 
-                    {r.status === 'accepted' && (
+                    {(r.status === 'accepted' || r.status === 'picked') && (
                        <div className="pt-6 border-t border-slate-50">
                           {r.collectionId?.pickup_status === 'completed' ? (
                              <button

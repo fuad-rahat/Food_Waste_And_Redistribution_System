@@ -172,7 +172,7 @@ router.post('/distribution-proof/:collectionId', auth, isNGO, isActiveUser, asyn
     await col.save();
 
     // Also update associated request status to 'picked'
-    await Request.findOneAndUpdate({ collectionId: col._id }, { status: 'picked' });
+    await Request.findOneAndUpdate({ collectionId: col._id }, { status: 'distributed' });
 
     res.json({ message: 'Distribution proof uploaded', proof });
   } catch (err) {
