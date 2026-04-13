@@ -72,6 +72,7 @@ router.put('/collection/:id/complete', auth, isNGO, isActiveUser, async (req, re
     if (!col) return res.status(404).json({ message: 'Collection not found' });
     if (String(col.ngoId) !== req.user.id) return res.status(403).json({ message: 'Not allowed' });
     col.pickup_status = 'completed';
+    col.pickedAt = new Date();
     await col.save();
 
     // Also update associated request status to 'picked'

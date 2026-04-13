@@ -281,16 +281,41 @@ export default function Profile() {
 
       {/* ══════════════════════════ STATS ROW ══════════════════════════ */}
       <div className="max-w-7xl mx-auto px-6 md:px-10 -mt-14 mb-10 relative z-10">
-        <div className={`grid gap-5 ${isViewProvider ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'}`}>
-          <StatCard label="Total Requests" value={totalReq} Icon={IconInbox} accent="bg-emerald-100 text-emerald-600" />
+        <div className={`grid gap-5 ${isViewProvider ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-5'}`}>
+          <StatCard label="Total Req" value={totalReq} Icon={IconInbox} accent="bg-emerald-100 text-emerald-600" />
           <StatCard label="Accepted" value={acceptedCnt} Icon={IconCheck} accent="bg-sky-100 text-sky-600" />
           <StatCard label="Pending" value={pendingCnt} Icon={IconStar} accent="bg-amber-100 text-amber-600" />
           {isViewProvider && <StatCard label="Food Listings" value={foods.length} Icon={IconBox} accent="bg-violet-100 text-violet-600" />}
+          {isViewNGO && (
+            <>
+              <StatCard label="Total Picked" value={publicStats?.totalPicked ?? 0} Icon={IconRecycle} accent="bg-indigo-100 text-indigo-600" />
+              <StatCard label="Total Proofs" value={publicStats?.totalProofUploaded ?? 0} Icon={IconShield} accent="bg-emerald-100 text-emerald-800" />
+            </>
+          )}
         </div>
       </div>
 
       {/* ══════════════════════════ MAIN CONTENT ══════════════════════════ */}
       <div className="max-w-7xl mx-auto px-6 md:px-10 pb-24">
+        
+        {/* NGO ACCOUNTABILITY ALERT */}
+        {isViewNGO && publicStats?.delayedProofAlert && (
+          <div className="mb-10 bg-rose-50 border-2 border-rose-200 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center gap-6 shadow-xl shadow-rose-900/5 animate-bounce-subtle">
+             <div className="w-16 h-16 bg-rose-500 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg shadow-rose-200 shrink-0">⚠️</div>
+             <div className="text-center md:text-left">
+                <h3 className="text-xl font-black text-rose-800 uppercase tracking-tight italic">Accountability Warning</h3>
+                <p className="text-rose-600 font-bold text-sm leading-relaxed max-w-xl">
+                  This NGO has food collections picked up more than <span className="underline decoration-wavy">2 days ago</span> that still lack distribution proof. Consistent delay may lead to account suspension.
+                </p>
+             </div>
+             {isSelf && (
+               <Link to="/ngo" className="ml-auto px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-rose-200 active:scale-95 border-none">
+                 Fix Issues Now
+               </Link>
+             )}
+          </div>
+        )}
+
 
         {/* ── EDIT PROFILE SECTION ── */}
         {isEditing && (

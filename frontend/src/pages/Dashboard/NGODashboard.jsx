@@ -25,12 +25,17 @@ export default function NGODashboard() {
   const [proofImages, setProofImages] = useState([])
   const [proofDesc, setProofDesc] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [filterStatuses, setFilterStatuses] = useState(['pending', 'accepted', 'picked', 'distributed'])
 
   // Request Modal State
   const [requestModal, setRequestModal] = useState(null)
   const [reqMsg, setReqMsg] = useState('')
   const [reqAmount, setReqAmount] = useState(1)
   const [viewProofModal, setViewProofModal] = useState(null)
+
+  const hasRequested = (foodId) => {
+    return myRequests.some(r => String(r.foodId?._id || r.foodId) === String(foodId) && ['pending', 'accepted', 'picked', 'distributed'].includes(r.status));
+  }
 
   useEffect(() => {
     getLocation()
@@ -42,20 +47,25 @@ export default function NGODashboard() {
     if (lat && lng) fetchNearby()
   }, [lat, lng])
 
-  const sortedRequests = React.useMemo(() => {
+  const filteredRequests = React.useMemo(() => {
     if (!myRequests) return [];
-    return [...myRequests].sort((a, b) => {
+    return myRequests.filter(r => filterStatuses.includes(r.status));
+  }, [myRequests, filterStatuses]);
+
+  const sortedRequests = React.useMemo(() => {
+    return [...filteredRequests].sort((a, b) => {
       const getPriority = (req) => {
         if (req.status === 'accepted' && req.collectionId?.pickup_status === 'completed') return 1; // Needs Proof
         if (req.status === 'accepted' && req.collectionId?.pickup_status === 'pending') return 2;   // Needs Pickup
         if (req.status === 'pending') return 3;
         if (req.status === 'picked') return 4;
         if (req.status === 'rejected') return 5;
-        return 6;
+        if (req.status === 'distributed') return 6;
+        return 7;
       };
       return getPriority(a) - getPriority(b);
     });
-  }, [myRequests]);
+  }, [filteredRequests]);
 
   const getLocation = () => {
     if (!navigator.geolocation) return
@@ -236,10 +246,11 @@ export default function NGODashboard() {
                            <span className={item.hoursToExpiry < 2 ? 'text-rose-500' : ''}>⏰ Expires: {item.hoursToExpiry.toFixed(1)}h</span>
                         </div>
                         <button 
+                          disabled={hasRequested(item.food._id)}
                           onClick={() => setRequestModal(item.food)}
-                          className="w-full py-4 bg-indigo-600 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-indigo-100 active:scale-95 border-none cursor-pointer"
+                          className={`w-full py-4 rounded-2xl transition-all active:scale-95 border-none cursor-pointer font-black text-[10px] uppercase tracking-widest shadow-lg ${hasRequested(item.food._id) ? 'bg-slate-100 text-slate-300 shadow-none' : 'bg-indigo-600 hover:bg-slate-800 text-white shadow-indigo-100'}`}
                         >
-                          Request This Food
+                          {hasRequested(item.food._id) ? '✓ Requested' : 'Request This Food'}
                         </button>
                       </div>
                     </div>
@@ -252,7 +263,29 @@ export default function NGODashboard() {
 
         {/* MY REQUESTS */}
         {tab === 'requests' && (
-          <div className="animate-fadeIn">
+          <div className="animate-fadeIn space-y-8">
+            {/* Status Filters */}
+            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-wrap items-center gap-6">
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter Status:</span>
+               <div className="flex flex-wrap gap-4">
+                  {['pending', 'accepted', 'picked', 'distributed', 'rejected'].map(s => (
+                    <label key={s} className="flex items-center gap-2 cursor-pointer group">
+                       <input 
+                         type="checkbox" 
+                         checked={filterStatuses.includes(s)} 
+                         onChange={() => {
+                            setFilterStatuses(prev => 
+                               prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
+                            )
+                         }}
+                         className="w-4 h-4 rounded border-slate-200 text-indigo-600 focus:ring-indigo-500"
+                       />
+                       <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">{s}</span>
+                    </label>
+                  ))}
+               </div>
+            </div>
+
             {myRequests.length === 0 ? (
               <div className="py-24 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
                 <span className="text-7xl mb-6 block">🗒️</span>

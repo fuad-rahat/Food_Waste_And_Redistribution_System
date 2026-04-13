@@ -183,10 +183,22 @@ router.get('/profile/:id', auth, async (req, res) => {
           .sort({ collectedAt: -1 })
       ]);
 
+      const totalPicked = collections.length;
+      const totalProofUploaded = proofs.length;
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const delayedProofAlert = collections.some(col => {
+        const hasProof = proofs.some(p => String(p.collectionId) === String(col._id));
+        return col.pickedAt && col.pickedAt < twoDaysAgo && !hasProof;
+      });
+
       stats = {
         total: allReqs.length,
         accepted: allReqs.filter(r => r.status === 'accepted').length,
         pending: allReqs.filter(r => r.status === 'pending').length,
+        totalPicked,
+        totalProofUploaded,
+        delayedProofAlert,
         _isNGO: true
       };
 

@@ -5,6 +5,7 @@ const CollectionSchema = new mongoose.Schema({
   providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   ngoId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   pickup_status: { type: String, enum: ['pending', 'completed'], default: 'pending' },
+  pickedAt: { type: Date },
   collectedAt: { type: Date, default: Date.now }
 });
 
