@@ -189,11 +189,15 @@ router.get('/profile/:id', auth, async (req, res) => {
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
       const delayedProofItems = collections.filter(col => {
         const hasProof = proofs.some(p => String(p.collectionId) === String(col._id));
-        return col.pickedAt && col.pickedAt < twoDaysAgo && !hasProof;
+        const pickedDate = col.pickedAt || col.collectedAt;
+        if (!pickedDate || hasProof) return false;
+        
+        const diffDays = (Date.now() - new Date(pickedDate)) / (1000 * 60 * 60 * 24);
+        return diffDays >= 2;
       }).map(col => ({
         _id: col._id,
         foodName: col.foodId?.foodName || 'Unknown Food',
-        pickedAt: col.pickedAt
+        pickedAt: col.pickedAt || col.collectedAt
       }));
       const delayedProofAlert = delayedProofItems.length > 0;
 
