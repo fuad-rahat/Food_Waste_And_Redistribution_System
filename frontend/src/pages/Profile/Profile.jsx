@@ -281,7 +281,7 @@ export default function Profile() {
 
       {/* ══════════════════════════ STATS ROW ══════════════════════════ */}
       <div className="max-w-7xl mx-auto px-6 md:px-10 -mt-14 mb-10 relative z-10">
-        <div className={`grid gap-5 ${isViewProvider ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-5'}`}>
+        <div className={`grid gap-5 ${isViewProvider ? 'grid-cols-2 md:grid-cols-4' : (isViewNGO ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-3')}`}>
           <StatCard label="Total Req" value={totalReq} Icon={IconInbox} accent="bg-emerald-100 text-emerald-600" />
           <StatCard label="Accepted" value={acceptedCnt} Icon={IconCheck} accent="bg-sky-100 text-sky-600" />
           <StatCard label="Pending" value={pendingCnt} Icon={IconStar} accent="bg-amber-100 text-amber-600" />
@@ -302,11 +302,20 @@ export default function Profile() {
         {isViewNGO && publicStats?.delayedProofAlert && (
           <div className="mb-10 bg-rose-50 border-2 border-rose-200 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center gap-6 shadow-xl shadow-rose-900/5 animate-bounce-subtle">
              <div className="w-16 h-16 bg-rose-500 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg shadow-rose-200 shrink-0">⚠️</div>
-             <div className="text-center md:text-left">
+             <div className="text-center md:text-left flex-1">
                 <h3 className="text-xl font-black text-rose-800 uppercase tracking-tight italic">Accountability Warning</h3>
                 <p className="text-rose-600 font-bold text-sm leading-relaxed max-w-xl">
                   This NGO has food collections picked up more than <span className="underline decoration-wavy">2 days ago</span> that still lack distribution proof. Consistent delay may lead to account suspension.
                 </p>
+                {/* Delayed Items List */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                   <span className="text-[10px] font-black uppercase text-rose-400 w-full mb-1">Pending Evidence:</span>
+                   {publicStats.delayedProofItems?.map((item, idx) => (
+                     <span key={item._id || idx} className="px-3 py-1 bg-white/50 text-rose-700 text-[10px] font-extrabold rounded-lg border border-rose-200 shadow-sm">
+                       📍 {item.foodName} <span className="text-[9px] opacity-60 ml-1">({new Date(item.pickedAt).toLocaleDateString()})</span>
+                     </span>
+                   ))}
+                </div>
              </div>
              {isSelf && (
                <Link to="/ngo" className="ml-auto px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-rose-200 active:scale-95 border-none">

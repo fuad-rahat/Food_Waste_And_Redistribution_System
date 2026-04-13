@@ -25,7 +25,8 @@ export default function NGODashboard() {
   const [proofImages, setProofImages] = useState([])
   const [proofDesc, setProofDesc] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [filterStatuses, setFilterStatuses] = useState(['pending', 'accepted', 'picked', 'distributed'])
+  const allStatuses = ['pending', 'accepted', 'picked', 'distributed', 'rejected']
+  const [filterStatuses, setFilterStatuses] = useState(allStatuses)
 
   // Request Modal State
   const [requestModal, setRequestModal] = useState(null)
@@ -268,15 +269,37 @@ export default function NGODashboard() {
             <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-wrap items-center gap-6">
                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter Status:</span>
                <div className="flex flex-wrap gap-4">
-                  {['pending', 'accepted', 'picked', 'distributed', 'rejected'].map(s => (
+                  {/* All Checkbox */}
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                     <input 
+                       type="checkbox" 
+                       checked={filterStatuses.length === allStatuses.length} 
+                       onChange={() => {
+                          if (filterStatuses.length === allStatuses.length) {
+                             setFilterStatuses([]); // User must select something or it shows empty
+                          } else {
+                             setFilterStatuses(allStatuses);
+                          }
+                       }}
+                       className="w-4 h-4 rounded border-slate-200 text-indigo-600 focus:ring-indigo-500"
+                     />
+                     <span className="text-[10px] font-black text-indigo-900 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">All</span>
+                  </label>
+
+                  {allStatuses.map(s => (
                     <label key={s} className="flex items-center gap-2 cursor-pointer group">
                        <input 
                          type="checkbox" 
                          checked={filterStatuses.includes(s)} 
                          onChange={() => {
-                            setFilterStatuses(prev => 
-                               prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
-                            )
+                            setFilterStatuses(prev => {
+                               const isAll = prev.length === allStatuses.length;
+                               if (isAll) {
+                                  return [s]; // If All was selected, now only show this one
+                               } else {
+                                  return prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s];
+                               }
+                            })
                          }}
                          className="w-4 h-4 rounded border-slate-200 text-indigo-600 focus:ring-indigo-500"
                        />

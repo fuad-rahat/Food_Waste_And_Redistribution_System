@@ -187,10 +187,15 @@ router.get('/profile/:id', auth, async (req, res) => {
       const totalProofUploaded = proofs.length;
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-      const delayedProofAlert = collections.some(col => {
+      const delayedProofItems = collections.filter(col => {
         const hasProof = proofs.some(p => String(p.collectionId) === String(col._id));
         return col.pickedAt && col.pickedAt < twoDaysAgo && !hasProof;
-      });
+      }).map(col => ({
+        _id: col._id,
+        foodName: col.foodId?.foodName || 'Unknown Food',
+        pickedAt: col.pickedAt
+      }));
+      const delayedProofAlert = delayedProofItems.length > 0;
 
       stats = {
         total: allReqs.length,
@@ -199,6 +204,7 @@ router.get('/profile/:id', auth, async (req, res) => {
         totalPicked,
         totalProofUploaded,
         delayedProofAlert,
+        delayedProofItems,
         _isNGO: true
       };
 
