@@ -161,4 +161,52 @@ router.get('/user/:id/profile', auth, isAdmin, async (req, res) => {
   res.json({ user, foods, requests });
 });
 
+// ─── NGO ACCOUNTABILITY ─────────────────────────────────────────────────────
+
+// GET /api/admin/red-alert-ngos — NGOs with overdue distribution proofs
+router.get('/red-alert-ngos', auth, isAdmin, async (req, res) => {
+  try {
+    const ngos = await User.find({ role: 'ngo' }).select('-password');
+    const result = [];
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    for (const ngo of ngos) {
+      const [proofs, collections] = await Promise.all([
+        DistributionProof.find({ ngoId: ngo._id }),
+        Collection.find({ ngoId: ngo._id, pickup_status: 'completed' })
+          .populate('foodId', 'foodName')
+      ]);
+
+      const totalPicked = collections.length;
+      const totalProofUploaded = proofs.length;
+      
+      const delayedProofItemsList = collections.filter(col => {
+        const hasProof = proofs.some(p => String(p.collectionId) === String(col._id));
+        const pickedDate = col.pickedAt || col.collectedAt;
+        if (!pickedDate || hasProof) return false;
+        return new Date(pickedDate) <= twoDaysAgo;
+      }).map(col => ({
+        _id: col._id,
+        foodName: col.foodId?.foodName || 'Unknown Food',
+        pickedAt: col.pickedAt || col.collectedAt
+      }));
+
+      if (delayedProofItemsList.length > 0) {
+        result.push({
+          ...ngo.toObject(),
+          totalPicked,
+          totalProofUploaded,
+          delayedProofItems: delayedProofItemsList
+        });
+      }
+    }
+
+    res.json({ ngos: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

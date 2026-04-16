@@ -49,6 +49,7 @@ export default function AdminDashboard() {
   const [foods, setFoods] = useState([])
   const [stats, setStats] = useState({})
   const [proofs, setProofs] = useState([])
+  const [redAlertNGOs, setRedAlertNGOs] = useState([])
   const [selectedDoc, setSelectedDoc] = useState(null)
   const [docViewer, setDocViewer] = useState(null)
 
@@ -61,18 +62,20 @@ export default function AdminDashboard() {
 
   const fetchAll = async () => {
     try {
-      const [pu, au, f, s, pr] = await Promise.all([
+      const [pu, au, f, s, pr, ra] = await Promise.all([
         api.get('/api/admin/pending-users', authHeaders()),
         api.get('/api/admin/users', authHeaders()),
         api.get('/api/admin/foods', authHeaders()),
         api.get('/api/admin/stats', authHeaders()),
         api.get('/api/admin/distribution-proofs', authHeaders()),
+        api.get('/api/admin/red-alert-ngos', authHeaders()),
       ])
       setPendingUsers(pu.data.users)
       setAllUsers(au.data.users)
       setFoods(f.data.foods)
       setStats(s.data)
       setProofs(pr.data.proofs)
+      setRedAlertNGOs(ra.data.ngos)
     } catch (e) { console.error(e) }
   }
 
@@ -105,6 +108,7 @@ export default function AdminDashboard() {
     { id: 'stats', label: 'Overview', icon: '📊' },
     { id: 'pending', label: `Verification (${pendingUsers.length})`, icon: '🛡️' },
     { id: 'users', label: 'User Directory', icon: '👥' },
+    { id: 'redalert', label: `Red alert NGO (${redAlertNGOs.length})`, icon: '🚨' },
     { id: 'foods', label: 'Food Database', icon: '🍱' },
     { id: 'proofs', label: 'Rescue Proofs', icon: '📸' },
   ];
@@ -392,6 +396,90 @@ export default function AdminDashboard() {
                     ))}
                  </div>
               )}
+           </div>
+        )}
+
+        {/* ── RED ALERT NGOs ── */}
+        {tab === 'redalert' && (
+           <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+              <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                 <div>
+                    <h3 className="text-xl font-black text-rose-600 tracking-tight italic uppercase flex items-center gap-2">
+                       <span className="w-3 h-3 bg-rose-500 rounded-full animate-ping" />
+                       Accountability Red Alerts
+                    </h3>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">NGOs with overdue distribution evidence</p>
+                 </div>
+                 <div className="px-5 py-2 bg-rose-50 rounded-2xl border border-rose-100">
+                    <span className="text-[10px] font-black text-rose-800 uppercase tracking-widest">{redAlertNGOs.length} Critical Issues</span>
+                 </div>
+              </div>
+              <div className="overflow-x-auto">
+                 <table className="w-full text-sm">
+                    <thead>
+                       <tr>
+                          <th className={thClass}>NGO Organization</th>
+                          <th className={thClass}>Picked</th>
+                          <th className={thClass}>Proofs</th>
+                          <th className={thClass}>Status</th>
+                          <th className={thClass}>Alert Reason</th>
+                          <th className={thClass}>Actions</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                       {redAlertNGOs.length === 0 ? (
+                          <tr>
+                             <td colSpan="6" className="py-20 text-center text-slate-400 font-black uppercase tracking-widest text-xs">
+                                ✨ No NGOs currently in red alert status
+                             </td>
+                          </tr>
+                       ) : (
+                          redAlertNGOs.map(ngo => (
+                             <tr key={ngo._id} className="hover:bg-rose-50/30 transition-colors">
+                                <td className={tdClass}>
+                                   <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center border border-rose-200 text-lg">
+                                         🏢
+                                      </div>
+                                      <div>
+                                         <Link to={`/profile/${ngo._id || ngo.slug}`} className="font-black text-slate-800 leading-tight uppercase italic hover:text-rose-600 transition-colors">
+                                            {ngo.name}
+                                         </Link>
+                                         <div className="text-[10px] text-slate-400 font-bold tracking-tight lowercase">{ngo.email}</div>
+                                      </div>
+                                   </div>
+                                </td>
+                                <td className={tdClass}>
+                                   <span className="font-black text-slate-700">{ngo.totalPicked}</span>
+                                </td>
+                                <td className={tdClass}>
+                                   <span className="font-black text-emerald-600">{ngo.totalProofUploaded}</span>
+                                </td>
+                                <td className={tdClass}>
+                                   <Badge color={ngo.isActive ? 'emerald' : 'rose'}>{ngo.isActive ? 'OPERATIONAL' : 'RESTRICTED'}</Badge>
+                                </td>
+                                <td className={tdClass}>
+                                   <div className="flex flex-col gap-1">
+                                      {ngo.delayedProofItems?.map((item, idx) => (
+                                         <span key={idx} className="text-[9px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
+                                            ⚠️ {item.foodName} ({new Date(item.pickedAt).toLocaleDateString()})
+                                         </span>
+                                      ))}
+                                   </div>
+                                </td>
+                                <td className={tdClass}>
+                                   <div className="flex gap-2">
+                                      <button onClick={() => toggleBlock(ngo._id)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${ngo.isActive ? 'bg-rose-600 text-white' : 'border border-slate-200 hover:bg-slate-50'}`}>
+                                         {ngo.isActive ? 'Block Account' : 'Unblock'}
+                                      </button>
+                                   </div>
+                                </td>
+                             </tr>
+                          ))
+                       )}
+                    </tbody>
+                 </table>
+              </div>
            </div>
         )}
 

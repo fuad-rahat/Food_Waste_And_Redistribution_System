@@ -283,7 +283,7 @@ export default function Profile() {
       <div className="max-w-7xl mx-auto px-6 md:px-10 -mt-14 mb-10 relative z-10">
         <div className={`grid gap-5 ${isViewProvider ? 'grid-cols-2 md:grid-cols-4' : (isViewNGO ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-3')}`}>
           <StatCard label="Total Req" value={totalReq} Icon={IconInbox} accent="bg-emerald-100 text-emerald-600" />
-          <StatCard label="Accepted" value={acceptedCnt} Icon={IconCheck} accent="bg-sky-100 text-sky-600" />
+          <StatCard label="Just Accepted" value={acceptedCnt} Icon={IconCheck} accent="bg-sky-100 text-sky-600" />
           <StatCard label="Pending" value={pendingCnt} Icon={IconStar} accent="bg-amber-100 text-amber-600" />
           {isViewProvider && <StatCard label="Food Listings" value={foods.length} Icon={IconBox} accent="bg-violet-100 text-violet-600" />}
           {isViewNGO && (
