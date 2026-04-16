@@ -71,6 +71,8 @@ const NotificationBell = () => {
         // Navigate based on type
         if (notif.type === 'new_food') {
             navigate('/foods');
+        } else if (notif.type === 'new_request') {
+            navigate('/provider', { state: { activeTab: 'requests' } });
         } else {
             navigate('/ngo');
         }
@@ -120,9 +122,14 @@ const NotificationBell = () => {
                                     className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${!n.isRead ? 'bg-emerald-50/30' : ''}`}
                                 >
                                     <div className="flex gap-3">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${n.type === 'new_food' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                                            n.type === 'new_food' ? 'bg-emerald-100 text-emerald-600' : 
+                                            n.type === 'new_request' ? 'bg-indigo-100 text-indigo-600' :
+                                            'bg-blue-100 text-blue-600'}`}>
                                             {n.type === 'new_food' ? (
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                                            ) : n.type === 'new_request' ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
                                             ) : (
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                                             )}

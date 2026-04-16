@@ -6,6 +6,7 @@ const Food = require('../models/Food');
 const Collection = require('../models/Collection');
 const Request = require('../models/Request');
 const DistributionProof = require('../models/DistributionProof');
+const Notification = require('../models/Notification');
 
 const { haversineDistance } = require('../utils/geo');
 
@@ -100,6 +101,16 @@ router.post('/request/:foodId', auth, isNGO, isActiveUser, async (req, res) => {
       requestedAmount: requestedAmount || 0
     });
     await reqDoc.save();
+
+    // Notify the provider
+    const notif = new Notification({
+      recipient: food.providerId,
+      type: 'new_request',
+      message: `An NGO has requested your food: ${food.foodName}`,
+      foodId: food._id
+    });
+    await notif.save();
+
     res.json({ message: 'Requested', request: reqDoc });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

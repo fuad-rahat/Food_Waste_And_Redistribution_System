@@ -67,7 +67,7 @@ function AppContent() {
           </div>
 
           <div className="flex items-center gap-4">
-            {user && user.role === 'ngo' && <NotificationBell />}
+            {user && (user.role === 'ngo' || user.role === 'provider') && <NotificationBell />}
 
             {user ? (
               <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
 import { useModal } from '../../context/ModalContext'
@@ -17,7 +17,8 @@ export default function ProviderDashboard() {
   const [myFoods, setMyFoods] = useState([])
   const [requests, setRequests] = useState({})
   const [proofs, setProofs] = useState([])
-  const [tab, setTab] = useState('post')
+  const location = useLocation()
+  const [tab, setTab] = useState(location.state?.activeTab || 'post')
   const [posting, setPosting] = useState(false)
   const [grantAmounts, setGrantAmounts] = useState({})
   const [lat, setLat] = useState('')
