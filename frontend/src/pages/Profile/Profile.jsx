@@ -319,9 +319,12 @@ export default function Profile() {
                 </div>
              </div>
              {isSelf && (
-               <div className="ml-auto px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-rose-200 active:scale-95 border-none">
+               <button
+                 onClick={() => navigate('/ngo', { state: { tab: 'requests', filter: 'picked' } })}
+                 className="ml-auto px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-rose-200 active:scale-95 border-none cursor-pointer"
+               >
                  Fix Issues Now
-               </div>
+               </button>
              )}
           </div>
         )}

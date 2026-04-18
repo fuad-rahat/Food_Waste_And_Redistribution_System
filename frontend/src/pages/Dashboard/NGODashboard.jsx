@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
 import { useSocket } from '../../context/SocketContext'
@@ -12,6 +12,7 @@ const authHeaders = () => ({ headers: { Authorization: 'Bearer ' + getToken() } 
 export default function NGODashboard() {
   const { showAlert } = useModal()
   const user = getUserFromToken()
+  const location = useLocation()
   const [tab, setTab] = useState('browse')
   const [nearby, setNearby] = useState([])
   const [myRequests, setMyRequests] = useState([])
@@ -46,6 +47,15 @@ export default function NGODashboard() {
     fetchMyRequests()
     fetchProofs()
   }, [])
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setTab(location.state.tab)
+    }
+    if (location.state?.filter) {
+      setFilterStatuses([location.state.filter])
+    }
+  }, [location.state])
 
   useEffect(() => {
     if (!socket) return;

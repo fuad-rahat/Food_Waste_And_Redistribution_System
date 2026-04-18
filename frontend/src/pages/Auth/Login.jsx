@@ -36,7 +36,7 @@ export default function Login() {
     'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 font-medium placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all'
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl ring-1 ring-slate-200 p-8 md:p-12 w-full max-w-md">
 
         {/* Header */}

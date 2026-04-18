@@ -155,7 +155,7 @@ export default function Register() {
                   <circle cx="12" cy="12" r="4" />
                 </svg>
               </div>
-              <span className="text-white font-extrabold text-xl tracking-tight">FoodShare</span>
+              <span className="text-white font-extrabold text-xl tracking-tight">FoodShareBd</span>
             </div>
 
             <h2 className="text-3xl font-extrabold text-white leading-snug mb-4">
@@ -210,7 +210,7 @@ export default function Register() {
                   <circle cx="12" cy="12" r="4" />
                 </svg>
               </div>
-              <span className="font-extrabold text-emerald-700 text-lg">FoodShare</span>
+              <span className="font-extrabold text-emerald-700 text-lg">FoodShareBd</span>
             </div>
 
             <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1">Create your account</h1>

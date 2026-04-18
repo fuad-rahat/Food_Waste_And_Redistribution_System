@@ -199,9 +199,9 @@ const ECOSYSTEM = [
 ]
 
 const TESTIMONIALS = [
-  { name: 'Rahima Begum', role: 'NGO Coordinator — Dhaka Aid', quote: 'FoodShare transformed how we source meals. We now receive fresh food daily with zero paperwork.', initials: 'RB', color: 'from-emerald-400 to-teal-500' },
+  { name: 'Rahima Begum', role: 'NGO Coordinator — Dhaka Aid', quote: 'FoodShareBd transformed how we source meals. We now receive fresh food daily with zero paperwork.', initials: 'RB', color: 'from-emerald-400 to-teal-500' },
   { name: 'Chef Karim', role: 'Head Chef — Grand Palace Hotel', quote: 'Instead of throwing food away, we donate in minutes. The platform is incredibly simple to use.', initials: 'CK', color: 'from-sky-400 to-blue-500' },
-  { name: 'Sumaiya Islam', role: 'Volunteer — Green Earth', quote: "The live map helps me plan pickup routes. I've rescued over 200 meals through FoodShare.", initials: 'SI', color: 'from-violet-400 to-purple-500' },
+  { name: 'Sumaiya Islam', role: 'Volunteer — Green Earth', quote: "The live map helps me plan pickup routes. I've rescued over 200 meals through FoodShareBd.", initials: 'SI', color: 'from-violet-400 to-purple-500' },
 ]
 
 const ORGS = ['Dhaka Medical Aid', 'Green Earth BD', 'Bread of Life Foundation', 'Helping Hands NGO', 'UNICEF Partner', 'Youth Volunteers BD']
@@ -387,7 +387,7 @@ export default function Home() {
             </h1>
 
             <p className="text-emerald-100/90 text-lg md:text-xl leading-relaxed mb-10 max-w-2xl">
-              FoodShare connects restaurants, hotels &amp; markets with NGOs — turning food waste into real impact across Bangladesh. <strong className="text-white">12,000+ meals rescued</strong> and counting.
+              FoodShareBd connects restaurants, hotels &amp; markets with NGOs — turning food waste into real impact across Bangladesh. <strong className="text-white">12,000+ meals rescued</strong> and counting.
             </p>
 
             <div className="flex flex-wrap gap-4 mb-14">
@@ -660,7 +660,7 @@ export default function Home() {
               Simple 3-Step Process
             </span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
-              How FoodShare Works
+              How FoodShareBd Works
             </h2>
             <p className="text-emerald-100/80 text-base md:text-lg max-w-xl mx-auto">
               From surplus kitchen food to a hungry community's plate — in minutes, not hours.
@@ -741,7 +741,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <span className="inline-block bg-sky-100 text-sky-700 font-bold text-xs uppercase tracking-widest px-4 py-2 rounded-full mb-4">For Everyone</span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Built for the Whole Ecosystem</h2>
-            <p className="text-slate-500 text-base max-w-lg mx-auto">Whether you give, receive, or deliver — FoodShare has a place for you.</p>
+            <p className="text-slate-500 text-base max-w-lg mx-auto">Whether you give, receive, or deliver — FoodShareBd has a place for you.</p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6">
@@ -783,7 +783,7 @@ export default function Home() {
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold mb-5 tracking-tight">Ready to Make a Difference?</h2>
           <p className="text-emerald-100 text-base md:text-lg mb-10 leading-relaxed">
-            Whether you have surplus food to share or are looking to feed your community — FoodShare is your platform.
+            Whether you have surplus food to share or are looking to feed your community — FoodShareBd is your platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register" className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-emerald-700 font-extrabold rounded-2xl hover:bg-emerald-50 transition-all shadow-xl text-sm">

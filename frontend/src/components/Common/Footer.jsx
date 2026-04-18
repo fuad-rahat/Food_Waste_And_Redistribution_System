@@ -18,7 +18,7 @@ export default function Footer() {
                                     <circle cx="12" cy="12" r="4" />
                                 </svg>
                             </div>
-                            <span className="text-white font-extrabold text-lg tracking-tight">FoodShare</span>
+                            <span className="text-white font-extrabold text-lg tracking-tight">FoodShareBd</span>
                         </Link>
                         <p className="text-sm leading-relaxed mb-5">
                             Connecting surplus food with communities in need across Bangladesh.
