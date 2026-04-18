@@ -27,7 +27,7 @@ Before you begin, ensure you have the following installed:
 ## 🚀 Live Deployment
 
 The system is now live at:
-- **Frontend**: [https://foodrescuebd.vercel.app](https://foodrescuebd.vercel.app)
+- **Frontend**: [https://foodsharebd.vercel.app](https://foodsharebd.vercel.app)
 - **Backend API**: [https://foodrescuebd-backend.vercel.app](https://foodrescuebd-backend.vercel.app)
 
 ## ⚙️ Installation & Setup
