@@ -52,6 +52,7 @@ export default function AdminDashboard() {
   const [redAlertNGOs, setRedAlertNGOs] = useState([])
   const [selectedDoc, setSelectedDoc] = useState(null)
   const [docViewer, setDocViewer] = useState(null)
+  const [blockLoading, setBlockLoading] = useState({})
 
   const openDocViewer = (u) => setDocViewer({ name: u.name, pages: u.legalDocumentImages, page: 0 })
   const closeDocViewer = () => setDocViewer(null)
@@ -88,8 +89,15 @@ export default function AdminDashboard() {
   }
 
   const toggleBlock = async (id) => {
-    await api.put(`/api/admin/user/${id}/block`, {}, authHeaders())
-    fetchAll()
+    setBlockLoading(prev => ({ ...prev, [id]: true }))
+    try {
+      await api.put(`/api/admin/user/${id}/block`, {}, authHeaders())
+      await fetchAll()
+    } catch (e) {
+      showAlert('Error', e.response?.data?.message || 'Failed to toggle status')
+    } finally {
+      setBlockLoading(prev => ({ ...prev, [id]: false }))
+    }
   }
 
   const delUser = async (id) => {
@@ -271,9 +279,13 @@ export default function AdminDashboard() {
                             <td className={tdClass}>
                                {u.role !== 'admin' && (
                                   <div className="flex gap-2">
-                                     <button onClick={() => toggleBlock(u._id)} className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all cursor-pointer">
-                                        {u.isActive ? 'Block' : 'Unblock'}
-                                     </button>
+                                     <button 
+                                        onClick={() => toggleBlock(u._id)} 
+                                        disabled={blockLoading[u._id]}
+                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200 transition-all cursor-pointer ${blockLoading[u._id] ? 'opacity-50 cursor-wait bg-slate-100' : 'hover:bg-slate-50'}`}
+                                      >
+                                         {blockLoading[u._id] ? 'Wait...' : (u.isActive ? 'Block' : 'Unblock')}
+                                      </button>
                                      <button onClick={() => delUser(u._id)} className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-100 transition-all cursor-pointer">Delete</button>
                                   </div>
                                )}
@@ -469,8 +481,13 @@ export default function AdminDashboard() {
                                 </td>
                                 <td className={tdClass}>
                                    <div className="flex gap-2">
-                                      <button onClick={() => toggleBlock(ngo._id)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${ngo.isActive ? 'bg-rose-600 text-white' : 'border border-slate-200 hover:bg-slate-50'}`}>
-                                         {ngo.isActive ? 'Block Account' : 'Unblock'}
+                                      <button 
+                                        onClick={() => toggleBlock(ngo._id)} 
+                                        disabled={blockLoading[ngo._id]}
+                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 ${blockLoading[ngo._id] ? 'bg-rose-50 text-rose-300 cursor-wait' : (ngo.isActive ? 'bg-rose-600 text-white hover:bg-rose-700' : 'border border-slate-200 hover:bg-slate-50')}`}
+                                      >
+                                         {blockLoading[ngo._id] && <span className="w-2 h-2 border-2 border-current border-t-transparent rounded-full animate-spin" />}
+                                         {blockLoading[ngo._id] ? 'Processing...' : (ngo.isActive ? 'Block Account' : 'Unblock')}
                                       </button>
                                    </div>
                                 </td>

@@ -69,6 +69,7 @@ export default function Profile() {
   const [groupedRequests, setGrouped] = useState({})
   const [requests, setRequests] = useState([])
   const [isEditing, setIsEditing] = useState(false)
+  const [selectedActivity, setSelectedActivity] = useState(null)
   const [editData, setEditData] = useState({ name: '', email: '', lat: 0, lng: 0 })
   const user = getUserFromToken()
 
@@ -400,7 +401,7 @@ export default function Profile() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {activities.map((act, i) => (
-                    <div key={i} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-all">
+                    <div key={i} onClick={() => setSelectedActivity(act)} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-all cursor-pointer">
                       {act.hasProof ? (
                         <div className="aspect-video relative overflow-hidden bg-slate-100">
                           <img src={act.proofImages[0]} alt="Impact" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -601,6 +602,72 @@ export default function Profile() {
           </div>
         )}
       </div>
+      {/* ── ACTIVITY DETAIL MODAL ── */}
+      {selectedActivity && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-fadeIn" onClick={() => setSelectedActivity(null)}>
+          <div className="relative w-full max-w-4xl bg-white rounded-[3rem] overflow-hidden shadow-2xl animate-scaleIn flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-6 right-6 w-12 h-12 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-600 font-black text-lg border-none cursor-pointer z-10 transition-all" onClick={() => setSelectedActivity(null)}>✕</button>
+            
+            <div className="overflow-y-auto">
+              <div className="bg-gradient-to-br from-indigo-50 to-sky-50 p-8 md:p-12">
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${selectedActivity.hasProof ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                    {selectedActivity.hasProof ? '✓ Distribution Verified' : '⌚ Pending Documentation'}
+                  </span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    {new Date(selectedActivity.pickupDate).toLocaleDateString(undefined, { dateStyle: 'long' })}
+                  </span>
+                </div>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none mb-6 italic uppercase">{selectedActivity.foodName}</h2>
+                <div className="flex flex-wrap gap-8">
+                   <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quantity</p>
+                      <p className="text-xl font-black text-slate-800 leading-none italic uppercase">{selectedActivity.quantity || '—'} Units</p>
+                   </div>
+                   <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Distance</p>
+                      <p className="text-xl font-black text-slate-800 leading-none italic uppercase">{selectedActivity.distanceKm?.toFixed(1) || '0.0'} KM</p>
+                   </div>
+                </div>
+              </div>
+
+              <div className="p-8 md:p-12 space-y-10">
+                {selectedActivity.description && (
+                  <div>
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Community Impact Statement</h3>
+                    <p className="text-lg text-slate-600 font-bold leading-relaxed italic">
+                      "{selectedActivity.description}"
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Distribution Evidence Gallery</h3>
+                  {selectedActivity.hasProof ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {selectedActivity.proofImages.map((img, idx) => (
+                        <a key={idx} href={img} target="_blank" rel="noreferrer" className="aspect-square rounded-2xl overflow-hidden ring-1 ring-slate-100 bg-slate-50 transition-all hover:ring-indigo-500 group">
+                          <img src={img} alt="proof" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-12 text-center text-slate-400 font-bold italic">
+                       No photos have been uploaded for this rescue yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex justify-center sticky bottom-0 backdrop-blur-sm">
+                <button onClick={() => setSelectedActivity(null)} className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-slate-200 border-none cursor-pointer">
+                  Close Case Log
+                </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

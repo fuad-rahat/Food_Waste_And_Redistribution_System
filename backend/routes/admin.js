@@ -166,43 +166,96 @@ router.get('/user/:id/profile', auth, isAdmin, async (req, res) => {
 // GET /api/admin/red-alert-ngos — NGOs with overdue distribution proofs
 router.get('/red-alert-ngos', auth, isAdmin, async (req, res) => {
   try {
-    const ngos = await User.find({ role: 'ngo' }).select('-password');
-    const result = [];
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    for (const ngo of ngos) {
-      const [proofs, collections] = await Promise.all([
-        DistributionProof.find({ ngoId: ngo._id }),
-        Collection.find({ ngoId: ngo._id, pickup_status: 'completed' })
-          .populate('foodId', 'foodName')
-      ]);
-
-      const totalPicked = collections.length;
-      const totalProofUploaded = proofs.length;
-      
-      const delayedProofItemsList = collections.filter(col => {
-        const hasProof = proofs.some(p => String(p.collectionId) === String(col._id));
-        const pickedDate = col.pickedAt || col.collectedAt;
-        if (!pickedDate || hasProof) return false;
-        return new Date(pickedDate) <= twoDaysAgo;
-      }).map(col => ({
-        _id: col._id,
-        foodName: col.foodId?.foodName || 'Unknown Food',
-        pickedAt: col.pickedAt || col.collectedAt
-      }));
-
-      if (delayedProofItemsList.length > 0) {
-        result.push({
-          ...ngo.toObject(),
-          totalPicked,
-          totalProofUploaded,
-          delayedProofItems: delayedProofItemsList
-        });
+    const ngos = await User.aggregate([
+      { $match: { role: 'ngo' } },
+      // 1. Get total collections and total proofs for each NGO (for stats)
+      {
+        $lookup: {
+          from: 'collections',
+          localField: '_id',
+          foreignField: 'ngoId',
+          as: 'allCollections'
+        }
+      },
+      {
+        $lookup: {
+          from: 'distributionproofs',
+          localField: '_id',
+          foreignField: 'ngoId',
+          as: 'allProofs'
+        }
+      },
+      // 2. Find specifically the delayed collections for the red alert list
+      {
+        $lookup: {
+          from: 'collections',
+          let: { ngoId: '$_id' },
+          pipeline: [
+            { 
+              $match: { 
+                $expr: { $eq: ['$ngoId', '$$ngoId'] },
+                pickup_status: 'completed'
+              } 
+            },
+            {
+              $addFields: {
+                effectivePickedAt: { $ifNull: ['$pickedAt', '$createdAt'] }
+              }
+            },
+            {
+              $match: {
+                effectivePickedAt: { $lte: twoDaysAgo }
+              }
+            },
+            {
+              $lookup: {
+                from: 'distributionproofs',
+                localField: '_id',
+                foreignField: 'collectionId',
+                as: 'collectionProofs'
+              }
+            },
+            { $match: { collectionProofs: { $size: 0 } } },
+            {
+              $lookup: {
+                from: 'foods',
+                localField: 'foodId',
+                foreignField: '_id',
+                as: 'foodInfo'
+              }
+            },
+            { $unwind: { path: '$foodInfo', preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                foodName: { $ifNull: ['$foodInfo.foodName', 'Unknown Food'] },
+                pickedAt: '$effectivePickedAt'
+              }
+            }
+          ],
+          as: 'delayedProofItems'
+        }
+      },
+      // 3. Filter only those with delayed items
+      { $match: { delayedProofItems: { $not: { $size: 0 } } } },
+      // 4. Final projection
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          role: 1,
+          slug: 1,
+          isActive: 1,
+          totalPicked: { $size: '$allCollections' },
+          totalProofUploaded: { $size: '$allProofs' },
+          delayedProofItems: 1
+        }
       }
-    }
+    ]);
 
-    res.json({ ngos: result });
+    res.json({ ngos });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
