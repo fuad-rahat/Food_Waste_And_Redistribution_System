@@ -13,6 +13,7 @@ import NotificationBell from './components/Common/NotificationBell'
 import { ModalProvider } from './context/ModalContext'
 import { getUserFromToken, logout } from './utils/auth'
 import ScrollToTop from './components/Common/ScrollToTop'
+import { SocketProvider } from './context/SocketContext'
 
 function RoleRoute({ role, children }) {
   const user = getUserFromToken()
@@ -23,9 +24,11 @@ function RoleRoute({ role, children }) {
 
 export default function App() {
   return (
-    <ModalProvider>
-      <AppContent />
-    </ModalProvider>
+    <SocketProvider>
+      <ModalProvider>
+        <AppContent />
+      </ModalProvider>
+    </SocketProvider>
   )
 }
 

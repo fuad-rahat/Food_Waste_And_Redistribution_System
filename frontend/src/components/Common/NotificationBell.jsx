@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { getToken } from '../../utils/auth';
+import { useSocket } from '../../context/SocketContext';
 
 const NotificationBell = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -24,11 +25,33 @@ const NotificationBell = () => {
         }
     };
 
+    const socket = useSocket();
+
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+        // Polling as a fallback, but we'll mainly rely on sockets now
+        const interval = setInterval(fetchNotifications, 60000); 
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('new_notification', (notif) => {
+            console.log('New notification received via socket:', notif);
+            setNotifications(prev => [notif, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            // Optional: Show a browser notification or sound
+            if (Notification.permission === "granted") {
+                new Notification(notif.message);
+            }
+        });
+
+        return () => {
+            socket.off('new_notification');
+        };
+    }, [socket]);
 
     useEffect(() => {
         function handleClickOutside(event) {

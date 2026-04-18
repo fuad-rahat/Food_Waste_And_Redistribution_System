@@ -9,6 +9,7 @@ const DistributionProof = require('../models/DistributionProof');
 const Notification = require('../models/Notification');
 
 const { haversineDistance } = require('../utils/geo');
+const { sendNotification } = require('../utils/socket');
 
 // GET /api/ngo/nearby?lat=..&lng=..&maxKm=5
 router.get('/nearby', auth, isNGO, isActiveUser, async (req, res) => {
@@ -110,6 +111,7 @@ router.post('/request/:foodId', auth, isNGO, isActiveUser, async (req, res) => {
       foodId: food._id
     });
     await notif.save();
+    sendNotification(food.providerId, notif);
 
     res.json({ message: 'Requested', request: reqDoc });
   } catch (err) {

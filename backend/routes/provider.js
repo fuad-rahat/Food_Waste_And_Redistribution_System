@@ -7,6 +7,7 @@ const Food = require('../models/Food');
 const Collection = require('../models/Collection');
 const Notification = require('../models/Notification');
 const DistributionProof = require('../models/DistributionProof');
+const { sendNotification } = require('../utils/socket');
 
 // GET /api/provider/requests — view requests grouped by food
 router.get('/requests', auth, isProvider, isActiveUser, async (req, res) => {
@@ -99,17 +100,21 @@ router.put('/request/:id/accept', auth, isProvider, isActiveUser, async (req, re
             foodId: food._id
           }));
           await Notification.insertMany(bulkNotifs);
+          // Emit socket events for each notification
+          bulkNotifs.forEach(n => sendNotification(n.recipient, n));
         }
       }
     }
 
     // Notify the accepted NGO
-    await new Notification({
+    const acceptedNotif = new Notification({
       recipient: reqDoc.ngoId,
       type: 'request_update',
       message: `Your request for ${food?.foodName || 'food'} was accepted!`,
       foodId: reqDoc.foodId
-    }).save();
+    });
+    await acceptedNotif.save();
+    sendNotification(reqDoc.ngoId, acceptedNotif);
     res.json({ message: 'Accepted', request: reqDoc, food });
   } catch (err) {
     console.error(err);
@@ -127,12 +132,14 @@ router.put('/request/:id/reject', auth, isProvider, isActiveUser, async (req, re
     await reqDoc.save();
 
     // Notify them
-    await new Notification({
+    const rejectedNotif = new Notification({
       recipient: reqDoc.ngoId,
       type: 'request_update',
       message: `Your request for food was rejected by the provider.`,
       foodId: reqDoc.foodId
-    }).save();
+    });
+    await rejectedNotif.save();
+    sendNotification(reqDoc.ngoId, rejectedNotif);
     res.json({ message: 'Rejected', request: reqDoc });
   } catch (err) {
     console.error('Error rejecting request:', err);

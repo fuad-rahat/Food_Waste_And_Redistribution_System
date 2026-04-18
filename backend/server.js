@@ -9,6 +9,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'https://foodrescuebd.vercel.app',
+  'https://foodsharebd.vercel.app'
 ];
 
 app.use(cors({
@@ -37,6 +38,12 @@ app.use('/api/provider', require('./routes/provider'));
 app.use('/api/ngo', require('./routes/ngo'));
 app.use('/api/notifications', require('./routes/notification'));
 
+const http = require('http');
+const { initSocket } = require('./utils/socket');
+
+const server = http.createServer(app);
+initSocket(server);
+
 const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/food-redistribution', {
@@ -44,7 +51,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/food-redi
   useUnifiedTopology: true
 }).then(() => {
   console.log('MongoDB connected');
-  app.listen(PORT, () => console.log('Server running on port', PORT));
+  server.listen(PORT, () => console.log('Server running on port', PORT));
 }).catch(err => {
   console.error('MongoDB connection error', err);
 });

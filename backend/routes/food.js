@@ -6,6 +6,7 @@ const Food = require('../models/Food');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { haversineDistance } = require('../utils/geo');
+const { sendNotification } = require('../utils/socket');
 
 // POST /api/food/create — provider posts food
 router.post('/create', auth, isProvider, isActiveUser, async (req, res) => {
@@ -49,7 +50,9 @@ router.post('/create', auth, isProvider, isActiveUser, async (req, res) => {
     }
 
     if (notifications.length > 0) {
-      await Notification.insertMany(notifications);
+      const savedNotifs = await Notification.insertMany(notifications);
+      // Emit socket events for each notification
+      savedNotifs.forEach(n => sendNotification(n.recipient, n));
     }
 
     res.json({ message: 'Food posted and nearby NGOs notified', food, notifiedCount: notifications.length });
