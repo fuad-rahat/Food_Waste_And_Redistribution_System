@@ -7,9 +7,10 @@ import { useSocket } from '../../context/SocketContext';
 const NotificationBell = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
+
+    const unreadCount = notifications.filter(n => !n.isSeen).length;
 
     const fetchNotifications = async () => {
         const token = getToken();
@@ -19,9 +20,20 @@ const NotificationBell = () => {
                 headers: { Authorization: 'Bearer ' + token }
             });
             setNotifications(res.data);
-            setUnreadCount(res.data.filter(n => !n.isSeen).length);
         } catch (err) {
             console.error('Failed to fetch notifications', err);
+        }
+    };
+
+    const markAllAsSeen = async () => {
+        try {
+            await api.put('/api/notifications/seen', {}, {
+                headers: { Authorization: 'Bearer ' + getToken() }
+            });
+            // Update local state to reflect seen status
+            setNotifications(prev => prev.map(n => ({ ...n, isSeen: true })));
+        } catch (err) {
+            console.error('Failed to mark as seen', err);
         }
     };
 
@@ -29,10 +41,15 @@ const NotificationBell = () => {
 
     useEffect(() => {
         fetchNotifications();
-        // Polling as a fallback, but we'll mainly rely on sockets now
         const interval = setInterval(fetchNotifications, 60000); 
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (isOpen && unreadCount > 0) {
+            markAllAsSeen();
+        }
+    }, [isOpen, unreadCount]);
 
     useEffect(() => {
         if (!socket) return;
@@ -40,7 +57,6 @@ const NotificationBell = () => {
         socket.on('new_notification', (notif) => {
             console.log('New notification received via socket:', notif);
             setNotifications(prev => [notif, ...prev]);
-            setUnreadCount(prev => prev + 1);
             
             // Play notification sound
             try {
@@ -71,20 +87,8 @@ const NotificationBell = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleToggle = async () => {
-        const newStatus = !isOpen;
-        setIsOpen(newStatus);
-        if (newStatus && unreadCount > 0) {
-            // Mark all as seen when opening the dropdown
-            try {
-                await api.put('/api/notifications/seen', {}, {
-                    headers: { Authorization: 'Bearer ' + getToken() }
-                });
-                setUnreadCount(0);
-            } catch (err) {
-                console.error('Failed to mark as seen', err);
-            }
-        }
+    const handleToggle = () => {
+        setIsOpen(!isOpen);
     };
 
     const handleNotificationClick = async (notif) => {
@@ -93,8 +97,8 @@ const NotificationBell = () => {
             await api.put(`/api/notifications/${notif._id}/read`, {}, {
                 headers: { Authorization: 'Bearer ' + getToken() }
             });
-            // Update local state
-            setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, isRead: true } : n));
+            // Update local state - mark as both read AND seen
+            setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, isRead: true, isSeen: true } : n));
         } catch (err) {
             console.error('Failed to mark as read', err);
         }
