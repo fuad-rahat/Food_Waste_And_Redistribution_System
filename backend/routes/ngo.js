@@ -18,7 +18,7 @@ router.get('/nearby', auth, isNGO, isActiveUser, async (req, res) => {
     const lng = parseFloat(req.query.lng);
     const maxKm = parseFloat(req.query.maxKm) || 10;
     const now = new Date();
-    const foods = await Food.find({ status: 'available', expiryTime: { $gt: now } }).populate('providerId', 'name location email');
+    const foods = await Food.find({ status: 'available', expiryTime: { $gt: now } }).populate('providerId', 'name location email slug');
     const list = foods.map(f => {
       const dist = haversineDistance(lat, lng, f.location.lat, f.location.lng);
       const hoursToExpiry = (new Date(f.expiryTime) - now) / (1000 * 60 * 60);
@@ -128,7 +128,7 @@ router.get('/requests', auth, isNGO, isActiveUser, async (req, res) => {
 
     const rawList = await Request.find({ ngoId: req.user.id })
       .populate('foodId')
-      .populate('providerId', 'name')
+      .populate('providerId', 'name slug')
       .populate('collectionId')
       .sort({ createdAt: -1 });
 
@@ -154,7 +154,7 @@ router.get('/collections', auth, isNGO, isActiveUser, async (req, res) => {
   try {
     const collections = await Collection.find({ ngoId: req.user.id })
       .populate('foodId')
-      .populate('providerId', 'name email')
+      .populate('providerId', 'name email slug')
       .sort({ collectedAt: -1 });
     res.json({ collections });
   } catch (err) {

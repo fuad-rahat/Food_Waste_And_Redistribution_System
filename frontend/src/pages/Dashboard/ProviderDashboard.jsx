@@ -321,7 +321,7 @@ export default function ProviderDashboard() {
                       <h4 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-3 italic uppercase truncate">{p.collectionId?.foodId?.foodName || 'Food Item'}</h4>
                       <div className="flex items-center gap-2 mb-4">
                         <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 border border-slate-200">{p.ngoId?.name?.charAt(0)}</div>
-                        <Link to={`/profile/${p.ngoId?._id || p.ngoId?.slug}`} className="text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors">
+                        <Link to={`/profile/${p.ngoId?.slug || p.ngoId?._id}`} className="text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors">
                           {p.ngoId?.name}
                         </Link>
                       </div>
@@ -371,7 +371,7 @@ export default function ProviderDashboard() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Receiver NGO</p>
-                    <Link to={`/profile/${selectedProof.ngoId?._id || selectedProof.ngoId?.slug}`} className="hover:text-emerald-600 transition-colors">
+                    <Link to={`/profile/${selectedProof.ngoId?.slug || selectedProof.ngoId?._id}`} className="hover:text-emerald-600 transition-colors">
                       <h4 className="text-xl font-black text-slate-800 tracking-tight leading-none mb-1">{selectedProof.ngoId?.name}</h4>
                     </Link>
                     <p className="text-xs font-bold text-slate-400">{selectedProof.ngoId?.email}</p>

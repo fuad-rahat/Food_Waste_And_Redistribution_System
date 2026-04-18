@@ -235,7 +235,7 @@ export default function NGODashboard() {
                       <div className="space-y-2 mb-8">
                          <p className="text-sm font-bold text-slate-500 flex items-center gap-2">
                            🏪 
-                           <Link to={`/profile/${item.food.providerId?._id || item.food.providerId?.slug}`} className="hover:text-indigo-600 transition-colors">
+                           <Link to={`/profile/${item.food.providerId?.slug || item.food.providerId?._id}`} className="hover:text-indigo-600 transition-colors">
                              {item.food.providerId?.name || 'Local Store'}
                            </Link>
                          </p>
@@ -327,7 +327,7 @@ export default function NGODashboard() {
                              <h4 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-1 italic uppercase">{r.foodId?.foodName || 'Food Item'}</h4>
                              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                                 Provider: 
-                                <Link to={`/profile/${r.providerId?._id}`} className="text-indigo-600 ml-1 hover:text-indigo-800 transition-colors">
+                                <Link to={`/profile/${r.providerId?.slug || r.providerId?._id}`} className="text-indigo-600 ml-1 hover:text-indigo-800 transition-colors">
                                   {r.providerId?.name}
                                 </Link>
                              </p>

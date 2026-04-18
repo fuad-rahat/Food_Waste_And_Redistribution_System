@@ -333,7 +333,7 @@ export default function Home() {
   const providerBuckets = new Map()
   foods.forEach((f) => {
     const prov = f.providerId
-    const providerKey = String(prov?._id || prov?.id || prov?.email || f.providerId || 'unknown')
+    const providerKey = String(prov?.slug || prov?._id || prov?.id || prov?.email || f.providerId || 'unknown')
     const providerName = prov?.name || 'Provider'
     let lat = prov?.location?.lat, lng = prov?.location?.lng
     if ((lat == null || lng == null) && f.location) { lat = f.location.lat; lng = f.location.lng; }
@@ -514,7 +514,10 @@ export default function Home() {
                       <Popup maxWidth={320}>
                         <div className="p-1 min-w-[240px]">
                           <div className="text-lg font-black border-b border-slate-100 pb-2 mb-3 text-slate-800 flex items-center gap-2">
-                            🏪 {m.providerName}
+                            🏪 
+                            <Link to={`/profile/${m.providerKey}`} className="text-slate-800 hover:text-emerald-600 transition-colors">
+                              {m.providerName}
+                            </Link>
                           </div>
                           <div className="flex flex-col gap-2">
                             {m.foods.map((f) => (
@@ -564,7 +567,12 @@ export default function Home() {
                         <div className="flex-1 min-w-0 pr-4">
                           <h4 className="text-lg font-black text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1">{f.foodName}</h4>
                           <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest truncate">🏪 {f.providerId?.name || 'Local Provider'}</p>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest truncate">
+                              🏪 
+                              <Link to={`/profile/${f.providerId?.slug || f.providerId?._id}`} className="hover:text-emerald-600 transition-colors">
+                                {f.providerId?.name || 'Local Provider'}
+                              </Link>
+                            </p>
                             {f.distanceKm != null && (
                               <div className="flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100/50">
                                 <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />

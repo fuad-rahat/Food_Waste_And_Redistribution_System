@@ -190,7 +190,7 @@ export default function AdminDashboard() {
                     <div className="p-8 md:p-10">
                       <div className="flex justify-between items-start mb-8">
                         <div>
-                          <Link to={`/profile/${u._id || u.slug}`} className="hover:text-emerald-600 transition-colors">
+                          <Link to={`/profile/${u.slug || u._id}`} className="hover:text-emerald-600 transition-colors">
                             <h4 className="text-2xl font-black text-slate-800 tracking-tighter italic uppercase leading-none mb-2">{u.name}</h4>
                           </Link>
                           <p className="text-slate-400 text-sm font-bold tracking-tight">{u.email}</p>
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
                                      {u.role === 'ngo' ? '🏢' : u.role === 'provider' ? '🏪' : '🛡️'}
                                   </div>
                                   <div>
-                                     <Link to={`/profile/${u._id || u.slug}`} className="font-black text-slate-800 leading-tight uppercase italic hover:text-emerald-600 transition-colors">
+                                     <Link to={`/profile/${u.slug || u._id}`} className="font-black text-slate-800 leading-tight uppercase italic hover:text-emerald-600 transition-colors">
                                         {u.name}
                                      </Link>
                                      <div className="text-[10px] text-slate-400 font-bold tracking-tight lowercase">{u.email}</div>
@@ -326,7 +326,7 @@ export default function AdminDashboard() {
                              <td className={tdClass}>
                                 <div className="flex items-center gap-2">
                                    <span className="text-sm">🏪</span>
-                                   <Link to={`/profile/${f.providerId?._id || f.providerId?.slug}`} className="font-bold text-slate-600 uppercase tracking-tight text-xs hover:text-emerald-600 transition-colors">
+                                   <Link to={`/profile/${f.providerId?.slug || f.providerId?._id}`} className="font-bold text-slate-600 uppercase tracking-tight text-xs hover:text-emerald-600 transition-colors">
                                       {f.providerId?.name || 'Local Store'}
                                    </Link>
                                 </div>
@@ -369,7 +369,7 @@ export default function AdminDashboard() {
                                    <h4 className="text-2xl font-black text-slate-800 tracking-tighter italic uppercase leading-none mb-1">Rescue Log #{p._id.slice(-6).toUpperCase()}</h4>
                                    <p className="text-slate-400 text-xs font-black uppercase tracking-widest">
                                       Target: 
-                                      <Link to={`/profile/${p.ngoId?._id || p.ngoId?.slug}`} className="text-indigo-600 ml-1 hover:text-indigo-800 transition-colors">
+                                      <Link to={`/profile/${p.ngoId?.slug || p.ngoId?._id}`} className="text-indigo-600 ml-1 hover:text-indigo-800 transition-colors">
                                          {p.ngoId?.name}
                                       </Link>
                                    </p>
@@ -454,7 +454,7 @@ export default function AdminDashboard() {
                                          🏢
                                       </div>
                                       <div>
-                                         <Link to={`/profile/${ngo._id || ngo.slug}`} className="font-black text-slate-800 leading-tight uppercase italic hover:text-rose-600 transition-colors">
+                                         <Link to={`/profile/${ngo.slug || ngo._id}`} className="font-black text-slate-800 leading-tight uppercase italic hover:text-rose-600 transition-colors">
                                             {ngo.name}
                                          </Link>
                                          <div className="text-[10px] text-slate-400 font-bold tracking-tight lowercase">{ngo.email}</div>

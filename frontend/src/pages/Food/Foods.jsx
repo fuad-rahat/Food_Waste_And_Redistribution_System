@@ -183,7 +183,7 @@ export default function Foods() {
                         <h4 className="text-xl font-black text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors truncate">{f.foodName}</h4>
                         <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
                           🏪 
-                          <Link to={`/profile/${f.providerId?._id || f.providerId?.slug}`} className="hover:text-emerald-600 transition-colors">
+                          <Link to={`/profile/${f.providerId?.slug || f.providerId?._id}`} className="hover:text-emerald-600 transition-colors">
                             {f.providerId?.name || 'Local Provider'}
                           </Link>
                         </div>

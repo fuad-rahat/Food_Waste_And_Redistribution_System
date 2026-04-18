@@ -171,12 +171,14 @@ router.get('/red-alert-ngos', auth, isAdmin, async (req, res) => {
 
     const ngos = await User.aggregate([
       { $match: { role: 'ngo' } },
-      // 1. Get total collections and total proofs for each NGO (for stats)
+      // 1. Get total completed collections and total proofs for each NGO (for stats)
       {
         $lookup: {
           from: 'collections',
-          localField: '_id',
-          foreignField: 'ngoId',
+          let: { ngoId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$ngoId', '$$ngoId'] }, pickup_status: 'completed' } }
+          ],
           as: 'allCollections'
         }
       },
@@ -202,7 +204,7 @@ router.get('/red-alert-ngos', auth, isAdmin, async (req, res) => {
             },
             {
               $addFields: {
-                effectivePickedAt: { $ifNull: ['$pickedAt', '$createdAt'] }
+                effectivePickedAt: { $ifNull: ['$pickedAt', '$collectedAt'] }
               }
             },
             {

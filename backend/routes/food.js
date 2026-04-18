@@ -102,7 +102,7 @@ router.get('/available', async (req, res) => {
     }
 
     let foods = await Food.find(query)
-      .populate('providerId', 'name email location')
+      .populate('providerId', 'name email location slug')
       .sort({ createdAt: -1 });
 
     // 2. Ensure location is present (backwards compatibility/sync)
