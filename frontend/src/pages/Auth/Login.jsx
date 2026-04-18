@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import api from '../../api'
-import { saveToken } from '../../utils/auth'
 import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -9,6 +9,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [verificationStatus, setVerificationStatus] = useState(null)
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   const submit = async (e) => {
@@ -18,8 +19,7 @@ export default function Login() {
     setLoading(true)
     try {
       const res = await api.post('/api/auth/login', { email, password })
-      saveToken(res.data.token)
-      const user = JSON.parse(atob(res.data.token.split('.')[1]))
+      const user = login(res.data.token)
       if (user.role === 'provider') navigate('/provider')
       else if (user.role === 'ngo') navigate('/ngo')
       else if (user.role === 'admin') navigate('/admin')

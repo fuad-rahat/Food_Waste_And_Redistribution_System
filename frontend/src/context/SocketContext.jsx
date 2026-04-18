@@ -1,16 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import { getToken, getUserFromToken } from '../utils/auth';
+import { useAuth } from './AuthContext';
 
 const SocketContext = createContext();
 
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }) => {
+    const { user, token } = useAuth();
     const [socket, setSocket] = useState(null);
 
     useEffect(() => {
-        const token = getToken();
         if (!token) {
             if (socket) {
                 socket.disconnect();
@@ -19,10 +19,7 @@ export const SocketProvider = ({ children }) => {
             return;
         }
 
-        const user = getUserFromToken();
         const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-        
-        // Ensure we only use the origin part for the socket connection
         const socketUrl = new URL(apiBaseUrl).origin;
 
         const newSocket = io(socketUrl, {
@@ -42,7 +39,7 @@ export const SocketProvider = ({ children }) => {
         return () => {
             newSocket.disconnect();
         };
-    }, [getToken()]); // Re-run when token changes (login/logout)
+    }, [token, user?.id]); // Re-run when token or user ID changes
 
     return (
         <SocketContext.Provider value={socket}>

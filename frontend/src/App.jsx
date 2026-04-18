@@ -11,12 +11,14 @@ import Foods from './pages/Food/Foods'
 import Footer from './components/Common/Footer'
 import NotificationBell from './components/Common/NotificationBell'
 import { ModalProvider } from './context/ModalContext'
-import { getUserFromToken, logout } from './utils/auth'
+import { logout } from './utils/auth'
 import ScrollToTop from './components/Common/ScrollToTop'
 import { SocketProvider } from './context/SocketContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 
 function RoleRoute({ role, children }) {
-  const user = getUserFromToken()
+  const { user, loading } = useAuth()
+  if (loading) return null
   if (!user) return <Navigate to="/login" />
   if (role && user.role !== role) return <Navigate to="/login" />
   return children
@@ -24,20 +26,22 @@ function RoleRoute({ role, children }) {
 
 export default function App() {
   return (
-    <SocketProvider>
-      <ModalProvider>
-        <AppContent />
-      </ModalProvider>
-    </SocketProvider>
+    <AuthProvider>
+      <SocketProvider>
+        <ModalProvider>
+          <AppContent />
+        </ModalProvider>
+      </SocketProvider>
+    </AuthProvider>
   )
 }
 
 function AppContent() {
-  const user = getUserFromToken()
+  const { user, logout: authLogout, loading } = useAuth()
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
-  const doLogout = () => { logout(); navigate('/login') }
+  const doLogout = () => { authLogout(); navigate('/login') }
 
   const NavLinks = () => {
     const activeClass = "text-emerald-600 border-b-2 border-emerald-600 text-sm font-black transition-all py-2 md:py-1";
