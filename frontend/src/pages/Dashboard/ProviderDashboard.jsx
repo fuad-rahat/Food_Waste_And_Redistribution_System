@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
+import { useSocket } from '../../context/SocketContext'
 import { useModal } from '../../context/ModalContext'
 import DashboardLayout from '../../components/Dashboard/DashboardLayout'
 
@@ -28,6 +29,8 @@ export default function ProviderDashboard() {
   // Selected proof for detailed view
   const [selectedProof, setSelectedProof] = useState(null)
 
+  const socket = useSocket()
+  
   useEffect(() => {
     fetchMyFoods()
     fetchRequests()
@@ -38,6 +41,21 @@ export default function ProviderDashboard() {
       setLng(user.location.lng ? String(user.location.lng) : '')
     }
   }, [])
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotif = (notif) => {
+      console.log('ProviderDashboard: Real-time update received:', notif.type);
+      if (notif.type === 'new_request' || notif.type === 'request_update') {
+        fetchRequests();
+        fetchMyFoods();
+      }
+    };
+
+    socket.on('new_notification', handleNewNotif);
+    return () => socket.off('new_notification', handleNewNotif);
+  }, [socket]);
 
   const fetchMyFoods = async () => {
     try {

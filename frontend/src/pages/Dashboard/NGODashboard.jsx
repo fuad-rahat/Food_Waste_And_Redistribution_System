@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api'
 import { getToken, getUserFromToken } from '../../utils/auth'
+import { useSocket } from '../../context/SocketContext'
 import { useModal } from '../../context/ModalContext'
 import DashboardLayout from '../../components/Dashboard/DashboardLayout'
 import ImageUploader from '../../components/Uploaders/ImageUploader'
@@ -38,11 +39,29 @@ export default function NGODashboard() {
     return myRequests.some(r => String(r.foodId?._id || r.foodId) === String(foodId) && ['pending', 'accepted', 'picked', 'distributed'].includes(r.status));
   }
 
+  const socket = useSocket()
+
   useEffect(() => {
     getLocation()
     fetchMyRequests()
     fetchProofs()
   }, [])
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotif = (notif) => {
+      console.log('NGODashboard: Real-time update received:', notif.type);
+      if (notif.type === 'new_food') {
+        fetchNearby();
+      } else if (notif.type === 'request_update') {
+        fetchMyRequests();
+      }
+    };
+
+    socket.on('new_notification', handleNewNotif);
+    return () => socket.off('new_notification', handleNewNotif);
+  }, [socket]);
 
   useEffect(() => {
     if (lat && lng) fetchNearby()

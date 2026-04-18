@@ -1,7 +1,5 @@
 const { Server } = require('socket.io');
-
 let io;
-const userSockets = new Map(); // userId -> socketId
 
 const initSocket = (server) => {
   io = new Server(server, {
@@ -9,6 +7,7 @@ const initSocket = (server) => {
       origin: [
         'http://localhost:5173',
         'https://foodrescuebd.vercel.app',
+        'https://foodsharebd.vercel.app'
       ],
       methods: ['GET', 'POST'],
       credentials: true
@@ -18,23 +17,16 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
 
-    // Identify user
+    // Identify user and join room
     socket.on('register', (userId) => {
       if (userId) {
-        userSockets.set(userId, socket.id);
-        console.log(`User ${userId} registered with socket ${socket.id}`);
+        socket.join(userId.toString());
+        console.log(`Socket ${socket.id} joined room ${userId}`);
       }
     });
 
     socket.on('disconnect', () => {
-      // Remove from map
-      for (const [userId, socketId] of userSockets.entries()) {
-        if (socketId === socket.id) {
-          userSockets.delete(userId);
-          console.log(`User ${userId} disconnected`);
-          break;
-        }
-      }
+      console.log('Client disconnected:', socket.id);
     });
   });
 
@@ -43,13 +35,9 @@ const initSocket = (server) => {
 
 const sendNotification = (userId, data) => {
   if (!io) return;
-  const socketId = userSockets.get(userId.toString());
-  if (socketId) {
-    io.to(socketId).emit('new_notification', data);
-    console.log(`Notification sent to user ${userId}`);
-  } else {
-    console.log(`User ${userId} not connected, notification stored in DB only.`);
-  }
+  // Send to all sockets in the user's room (multi-tab support)
+  io.to(userId.toString()).emit('new_notification', data);
+  console.log(`Notification signal sent to room ${userId}`);
 };
 
 const getIO = () => io;
